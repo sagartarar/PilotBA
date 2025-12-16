@@ -56,7 +56,7 @@ testcontainers = "0.15"
 testcontainers-modules = { version = "0.3", features = ["postgres", "redis"] }
 tokio-test = "0.4"
 assert_matches = "1.5"
-rstest = "0.18"
+rstest = "0.26"
 fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
 proptest = "1.4"
 criterion = { version = "0.5", features = ["html_reports"] }
