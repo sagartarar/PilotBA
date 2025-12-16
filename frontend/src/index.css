@@ -15,6 +15,11 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Theme colors */
+  --background: 0 0% 14%;
+  --foreground: 0 0% 98%;
+  --border: 0 0% 30%;
 }
 
 body {
@@ -35,9 +40,8 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
-
-
