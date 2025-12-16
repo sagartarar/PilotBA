@@ -1,0 +1,66 @@
+# Justfile for common development tasks
+# Install with: cargo install just
+
+# Run all tests
+test:
+    cargo test --all
+
+# Run tests with output
+test-verbose:
+    cargo test --all -- --nocapture
+
+# Run integration tests only
+test-integration:
+    cargo test --test '*' -- --test-threads=1
+
+# Run unit tests only
+test-unit:
+    cargo test --lib
+
+# Run benchmarks
+bench:
+    cargo bench
+
+# Run tests with coverage (requires tarpaulin)
+coverage:
+    cargo tarpaulin --out Html --output-dir coverage
+
+# Check code without building
+check:
+    cargo check --all-targets
+
+# Run clippy linter
+lint:
+    cargo clippy --all-targets -- -D warnings
+
+# Format code
+fmt:
+    cargo fmt --all
+
+# Check formatting
+fmt-check:
+    cargo fmt --all -- --check
+
+# Run all checks (lint + format + test)
+ci: fmt-check lint test
+
+# Clean build artifacts
+clean:
+    cargo clean
+
+# Watch and run tests on changes
+watch-test:
+    cargo watch -x test
+
+# Run the application
+run:
+    cargo run
+
+# Run in release mode
+run-release:
+    cargo run --release
+
+# Build for production
+build-release:
+    cargo build --release
+

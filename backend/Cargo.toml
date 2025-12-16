@@ -49,10 +49,27 @@ parquet = "50.0"
 
 [dev-dependencies]
 actix-rt = "2.9"
+# Testing frameworks
+mockall = "0.12"
+wiremock = "0.6"
+testcontainers = "0.15"
+testcontainers-modules = { version = "0.3", features = ["postgres", "redis"] }
+tokio-test = "0.4"
+assert_matches = "1.5"
+rstest = "0.18"
+fake = { version = "2.9", features = ["derive", "chrono", "uuid"] }
+proptest = "1.4"
+criterion = { version = "0.5", features = ["html_reports"] }
 
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 
+[[bench]]
+name = "query_benchmarks"
+harness = false
 
+[lib]
+name = "pilotba_backend"
+path = "src/lib.rs"
