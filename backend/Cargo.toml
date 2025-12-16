@@ -45,7 +45,7 @@ anyhow = "1.0"
 
 # Arrow for columnar data
 arrow = "50.0"
-parquet = "50.0"
+parquet = "57.1"
 
 [dev-dependencies]
 actix-rt = "2.9"
