@@ -34,3 +34,4 @@ export { ChartType } from './types';
 // Utilities
 export { Matrix } from './utils/matrix';
 
+

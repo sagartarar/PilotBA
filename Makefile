@@ -61,3 +61,4 @@ setup: install docker-up ## Complete setup (install + start services)
 	@echo "  2. Terminal 2: make dev-frontend"
 	@echo "  3. Visit http://localhost:3000"
 
+
