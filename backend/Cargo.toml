@@ -1,0 +1,57 @@
+[package]
+name = "pilotba-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Web framework
+actix-web = "4.4"
+actix-cors = "0.7"
+actix-files = "0.6"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono"] }
+duckdb = { version = "0.10", features = ["bundled"] }
+
+# Redis
+redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+
+# GraphQL
+async-graphql = "7.0"
+async-graphql-actix-web = "7.0"
+
+# WebSocket
+actix-ws = "0.2"
+
+# Authentication
+jsonwebtoken = "9.2"
+argon2 = "0.5"
+
+# Utilities
+uuid = { version = "1.6", features = ["serde", "v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = "0.15"
+env_logger = "0.11"
+log = "0.4"
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Arrow for columnar data
+arrow = "50.0"
+parquet = "50.0"
+
+[dev-dependencies]
+actix-rt = "2.9"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+
