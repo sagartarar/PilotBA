@@ -34,7 +34,7 @@ fn bench_json_deserialization(c: &mut Criterion) {
 
     c.bench_function("json_deserialization", |b| {
         b.iter(|| {
-            let deserialized: serde_json::Value = 
+            let deserialized: serde_json::Value =
                 serde_json::from_str(black_box(json_str)).unwrap();
             black_box(deserialized);
         })
@@ -50,7 +50,7 @@ fn bench_query_parsing(c: &mut Criterion) {
     ];
 
     let mut group = c.benchmark_group("query_parsing");
-    
+
     for (i, query) in queries.iter().enumerate() {
         group.bench_with_input(BenchmarkId::from_parameter(i), query, |b, q| {
             b.iter(|| {
@@ -60,7 +60,7 @@ fn bench_query_parsing(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 
@@ -87,10 +87,10 @@ fn bench_data_transformation(c: &mut Criterion) {
 
 fn bench_large_dataset_operations(c: &mut Criterion) {
     let mut group = c.benchmark_group("large_dataset");
-    
+
     for size in [100, 1000, 10000].iter() {
         let data: Vec<i32> = (0..*size).collect();
-        
+
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, _| {
             b.iter(|| {
                 let sum: i32 = black_box(&data).iter().sum();
@@ -98,7 +98,7 @@ fn bench_large_dataset_operations(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 

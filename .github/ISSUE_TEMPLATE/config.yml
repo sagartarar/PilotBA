@@ -1,0 +1,15 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/[username]/PilotBA/blob/main/PROJECT_ARCHITECTURE.md
+    about: Read the project architecture and documentation
+  - name: 🔄 Workflow Guide
+    url: https://github.com/[username]/PilotBA/blob/main/WORKFLOW_GUIDE.md
+    about: Learn about development workflow and standards
+  - name: ⚠️ Risks & Issues Log
+    url: https://github.com/[username]/PilotBA/blob/main/RISKS_AND_ISSUES.md
+    about: View current risks and known issues
+  - name: 🧪 Testing Documentation
+    url: https://github.com/[username]/PilotBA/blob/main/docs/TESTING.md
+    about: Complete testing guide and standards
+
