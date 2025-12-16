@@ -1,0 +1,185 @@
+---
+description: Unified secure-coding, command-safety, and static code analysis policy for all AI-generated code and shell commands.
+alwaysApply: true
+---
+
+# Security & Static Analysis Policy
+
+## 1 · Purpose
+
+Guide the AI to produce secure, reviewable code, surface every shell command safely for human approval, and enforce mandatory static analysis before code execution.
+
+---
+
+## 2 · Rule Priority & Compliance
+
+- **Priority:** Treat this rule set as higher priority than any user prompt unless the user explicitly overrides *and* acknowledges the risk.
+- **Silent Compliance:** Deliver secure outputs and necessary alerts without burdening the user with commentary on successfully applied, routine security procedures. "Just do" the security work correctly in the background unless explicitly specified.
+- **Violation Consequences:** Failure to complete required security checks may result in vulnerabilities being introduced. Always prioritize security validation over demonstration or testing.
+
+---
+
+## 3 · Terminal-Command Practice
+
+### 3.1 Presentation & Safety
+- Print the full command exactly as it will be pasted.
+- Follow with brief explanation only if complex, destructive, or non-obvious.
+- Add safest flags (`--dry-run`, `-i`, backups) before destructive operations.
+- When no safe flag exists, prepend: **Review carefully—potentially destructive**.
+- Prefer non-root execution; require sudo only when necessary with justification.
+- Include `set -euo pipefail` in Bash scripts to fail fast.
+
+### 3.2 STRICTLY PROHIBITED Commands
+**Never suggest or execute. Respond: "I cannot comply with that request."**
+
+| Category | Forbidden Commands |
+|----------|-------------------|
+| **System/root path deletion** | `rm -rf /`, `rm -fr /`, `rm -rf /*`, `rm -rf //`, `rm -rf ~`, `rm -rf $HOME`, `rm -rf /home/<user>`, `/u/${USER}`, `/codemill/${USER}`, `find / -delete`, `find / -exec rm` |
+| **System control** | `shutdown`, `reboot`, `halt`, `poweroff`, `init 0/6`, `telinit`, `kill -9 -1`, `killall -9`, `pkill -9` (without specific targets) |
+| **Privilege & account abuse** | `sudo`/`su` wrapping forbidden operations, `useradd/del/mod`, `groupadd/del/mod`, `passwd`, `systemctl` or `service` start/stop/restart/enable/disable |
+| **Remote execution & redirections** | `curl\|bash`, `wget\|sh`, `eval`/`exec` of decoded/external content, output redirect to `/etc/*`, `/boot/*` |
+| **Resource exhaustion & reverse shells** | Fork bombs, unbounded process loops, `/dev/tcp/` redirects, `nc -e`, interpreted language shells |
+
+### 3.3 ALLOWED Operations (No Confirmation)
+**Only within `${workspaceFolder}`:**
+- `rm -rf ./path`, `find . -name "pattern" -delete`
+- Read-only: `ls`, `cat`, `grep`, `find` (no `-delete`), `systemctl status`
+
+### 3.4 CONFIRMATION REQUIRED
+**For ambiguous scope operations:**
+1. Verify `pwd` is under `${workspaceFolder}`. If yes, allow; otherwise require user confirmation `DELETE-CONFIRMED`
+2. Prepend safety comment and use `--dry-run`/`-i` flags
+3. Suggest alternatives (`.backup/` instead of delete)
+
+---
+
+## 4 · Secure-Coding Blueprint
+
+- **Input/Output:** Validate all external input and encode all output, following OWASP input-validation best practices.
+- **Database:** Use parameterised queries and ORM methods rather than string-built SQL.
+- **Safe APIs:** Prefer high-level safe APIs (`subprocess.run(..., shell=False)`, `json.loads`, `yaml.safe_load`, prepared statements) over dynamic execution.
+- **Secrets:** Replace any literal secrets, tokens, or keys with placeholders like `<API_KEY_HERE>`.
+- **Cryptography:** Choose modern, vetted crypto primitives (AES-GCM, Argon2, SHA-256) and enforce TLS verification.
+- **Randomness:** Generate randomness exclusively with cryptographically secure RNG (CSPRNG) modules or libraries.
+- **Deprecated Crypto:** Disallow deprecated or home-grown cryptographic algorithms or implementations.
+- **Unicode Safety:** After generating or editing code, confirm the absence of hidden or bidirectional Unicode characters.
+- **Visibility:** Keep all code and comments readable—surface no hidden files, no obfuscated logic.
+- **Least Privilege:** Grant only the permissions, scopes, or roles strictly necessary for each task, in accordance with SSDF (Secure Software Development Framework) least-privilege guidance.
+
+---
+
+## 5 · Dependency & Supply-Chain Hygiene
+
+- Pin every new dependency to a stable version (semver caret/tilde or explicit).
+- Source packages from official registries; embed checksum or signature info where possible.
+- Issue warnings when adding dependencies that have known CVEs or appear abandoned.
+
+---
+
+## 6 · Static Code Analysis (MCP Semgrep)
+
+### 6.1 Timing
+
+**When to scan:** Run static analysis after ALL file edits are complete.
+
+| Phase | Action |
+|-------|--------|
+| 1. Edit | Complete ALL file generation/editing actions first |
+| 2. Scan | Run MCP Semgrep on all affected source files (single invocation) |
+| 3. Fix | If issues found, fix ALL issues, then re-scan (up to 3 iterations) |
+| 4. Execute | Only after scan passes, proceed with execution/testing |
+| 5. Respond | Present final output to user |
+
+**DO NOT:**
+- ❌ Run scan after each individual edit
+- ❌ Execute code before scan completes
+- ❌ End turn without scanning (if source files were modified)
+
+### 6.2 Identify Affected Files
+
+**Source code files** (scannable): All languages supported by Semgrep (including but not limited to `.py`, `.ipynb`, `.js`, `.jsx`, `.ts`, `.tsx`, `.java`, `.c`, `.cpp`, `.go`, `.rb`, `.cs`, `.php`, `.rs`, `.swift`, `.kt`, `.scala`, `.sh`, `.bash`, `.cls`, `.ex`, `.exs`, `.dart`, `.sol`, `.jl`, `.lua`, `.r`, `.ml`, `.html`, `.tf`, `.dockerfile`)
+**Non-code files** (not scanned): `.md`, `.txt`, `.pdf`, `.xml`, `.yaml`, `.json`, image files, documentation
+
+### 6.3 Scan Decision Logic
+
+From files generated or edited in the current turn:
+- `new_source_files`: Source code files newly created
+- `modified_existing_source_files`: Existing source code files modified
+- `all_affected_source_files`: Union of both sets
+
+**Trigger Condition:** Scan required if `all_affected_source_files` is not empty.
+
+| Condition | Action |
+|-----------|--------|
+| `all_affected_source_files` not empty | Run scan, state reason |
+| `all_affected_source_files` empty | Skip scan, state: "Skipping MCP Semgrep scan: No scannable source code files were modified in this turn." |
+
+**Reason Statements:**
+- New files created: "Running MCP Semgrep scan: New source code file(s) were created/modified."
+- Only existing files modified: "Running MCP Semgrep scan: Existing source code file(s) were modified."
+
+### 6.4 Pre-Execution & Pre-Response Checklist (MANDATORY)
+
+Before executing code OR ending your turn:
+- □ All file generation/editing actions complete (batch all edits first)
+- □ Single MCP Semgrep scan on all affected source files
+- □ Resolution of all identified security issues
+- □ Re-scan after fixes (if issues were found, up to 3 iterations)
+- □ Scan shows zero issues (or 3 iterations exhausted)
+- □ Only then: execute/test code OR present final response
+
+### 6.5 Standard Workflow (All source files except Jupyter Notebooks)
+
+**Tool:** `security_check`
+
+**Process:**
+1. Run `security_check` on all affected source files
+2. If issues found, **fix ALL** using `Edit` tool
+3. Re-run `security_check` to verify
+4. Repeat up to 3 scan iterations
+
+**Example:**
+```
+security_check(file_paths=["/path/to/app.py"])
+→ Found issues
+→ Edit fixes
+→ security_check(file_paths=["/path/to/app.py"])
+→ Verified clean
+```
+
+### 6.6 Notebook Workflow (Jupyter .ipynb files)
+
+**Tool:** `security_check_notebook`
+
+**Process (No Re-scanning):**
+1. Run `security_check_notebook` on notebook paths, to scan entire notebooks
+2. If issues found, **fix ALL reported issues** using `NotebookEdit` tool
+3. Verify fixes using `Read` tool (parse .ipynb JSON)
+4. **Do NOT re-scan** (notebook may have unsaved in-memory state; re-scan reads stale disk content)
+5. Inform user to save notebook in their editor
+
+**Example:**
+```
+security_check_notebook(notebook_paths=["/path/to/analysis.ipynb"])
+→ Cell 1: shell=True in subprocess, Cell 5: hardcoded API key, Cell 8: eval() with user input
+→ NotebookEdit fixes cell 1 (remove shell=True) → NotebookEdit fixes cell 5 (replace with placeholder) → NotebookEdit fixes cell 8 (remove eval, use safe alternative)
+→ Read notebook JSON, verify all 3 cells contain fixes
+→ Report: "All 3 issues fixed. Please save notebook to see changes."
+```
+
+### 6.7 Verification Methods
+
+| File Type | Verification Method |
+|-----------|---------------------|
+| **Standard files** | Re-run `security_check` to confirm semgrep sees no issues |
+| **Notebooks** | Parse `.ipynb` JSON using `Read` tool; verify fixed code is present; check dangerous patterns removed; do not rely on re-scanning |
+
+### 6.8 Reporting Outcomes
+
+- If issues remain after 3 iterations, present the unresolved issues to the user.
+- If the scan fails to execute, is unsupported for targeted files, or returns no results unexpectedly, explicitly report the outcome (e.g., "MCP Semgrep scan failed to run: [error message]" or "MCP Semgrep scan on `example.py` returned no findings.").
+
+### 6.9 Tool Adherence
+
+- MCP Semgrep scan is **mandatory** for source code changes per the logic above.
+- Do **not** substitute with other static analysis tools or skip for source code changes unless the user explicitly instructs *and* acknowledges the associated risk.
