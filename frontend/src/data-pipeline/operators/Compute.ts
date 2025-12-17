@@ -106,7 +106,7 @@ export class ComputeOperator {
       const name = match[1];
       // Skip JavaScript keywords
       if (!this.isJavaScriptKeyword(name)) {
-        columns.push(name);
+        columns.add(name);
       }
     }
 

@@ -19,7 +19,12 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   label,
 }) => {
   return (
-    <div className={clsx('flex flex-col items-center justify-center gap-2', className)}>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={label || 'Loading'}
+      className={clsx('flex flex-col items-center justify-center gap-2', className)}
+    >
       <svg
         className={clsx('animate-spin text-primary', sizeStyles[size])}
         xmlns="http://www.w3.org/2000/svg"

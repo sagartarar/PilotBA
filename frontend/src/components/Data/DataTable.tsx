@@ -21,7 +21,7 @@ const ROW_HEIGHT = 40;
 const HEADER_HEIGHT = 48;
 const OVERSCAN = 5;
 
-export const DataTable: React.FC<DataTableProps> = ({
+export const DataTable: React.FC<DataTableProps> = React.memo(({
   table,
   className,
   pageSize = 100,
@@ -328,5 +328,8 @@ export const DataTable: React.FC<DataTableProps> = ({
       )}
     </div>
   );
-};
+});
+
+// Display name for debugging
+DataTable.displayName = 'DataTable';
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Table } from 'apache-arrow';
 import { clsx } from 'clsx';
 import { useDataStore, useUIStore } from '../../store';
@@ -7,9 +7,9 @@ import { AggregationBuilder, AggregationConfig } from './AggregationBuilder';
 import { SortBuilder, SortConfig } from './SortBuilder';
 import { Button } from '../common/Button';
 import { DataTable } from '../Data/DataTable';
-import { Filter, FilterCondition as FilterOp } from '../../data-pipeline/operators/Filter';
-import { Aggregate, AggregateFunction } from '../../data-pipeline/operators/Aggregate';
-import { Sort, SortOrder } from '../../data-pipeline/operators/Sort';
+import { FilterOperator, FilterParams } from '../../data-pipeline/operators/Filter';
+import { AggregateOperator, AggregateParams, AggregateFunction } from '../../data-pipeline/operators/Aggregate';
+import { SortOperator, SortParams } from '../../data-pipeline/operators/Sort';
 
 type QueryTab = 'filter' | 'aggregate' | 'sort';
 
@@ -37,61 +37,75 @@ export const QueryBuilder: React.FC = () => {
       const column = result.getChild(filter.column);
       if (!column) continue;
 
-      let condition: FilterOp;
+      // Map UI operator to FilterOperatorType
+      let operatorType: FilterParams['operator'] = 'eq';
+      let value: FilterParams['value'] = filter.value;
+      let values: FilterParams['values'];
+      let min: FilterParams['min'];
+      let max: FilterParams['max'];
+      let pattern: FilterParams['pattern'];
 
       switch (filter.operator) {
         case 'eq':
-          condition = { type: 'eq', value: parseValue(filter.value, column) };
+          operatorType = 'eq';
           break;
         case 'neq':
-          condition = { type: 'neq', value: parseValue(filter.value, column) };
+          operatorType = 'ne';
           break;
         case 'gt':
-          condition = { type: 'gt', value: parseValue(filter.value, column) };
+          operatorType = 'gt';
           break;
         case 'gte':
-          condition = { type: 'gte', value: parseValue(filter.value, column) };
+          operatorType = 'gte';
           break;
         case 'lt':
-          condition = { type: 'lt', value: parseValue(filter.value, column) };
+          operatorType = 'lt';
           break;
         case 'lte':
-          condition = { type: 'lte', value: parseValue(filter.value, column) };
+          operatorType = 'lte';
           break;
         case 'contains':
-          condition = { type: 'like', value: `%${filter.value}%` };
+          operatorType = 'like';
+          pattern = `%${filter.value}%`;
           break;
         case 'startsWith':
-          condition = { type: 'like', value: `${filter.value}%` };
+          operatorType = 'like';
+          pattern = `${filter.value}%`;
           break;
         case 'endsWith':
-          condition = { type: 'like', value: `%${filter.value}` };
+          operatorType = 'like';
+          pattern = `%${filter.value}`;
           break;
         case 'in':
-          const inValues = String(filter.value).split(',').map((v) => v.trim());
-          condition = { type: 'in', value: inValues };
-          break;
-        case 'notIn':
-          const notInValues = String(filter.value).split(',').map((v) => v.trim());
-          condition = { type: 'notIn', value: notInValues };
+          operatorType = 'in';
+          values = String(filter.value).split(',').map((v) => v.trim());
           break;
         case 'isNull':
-          condition = { type: 'isNull' };
+          operatorType = 'isNull';
           break;
         case 'isNotNull':
-          condition = { type: 'isNotNull' };
+          operatorType = 'notNull';
           break;
         case 'between':
-          condition = {
-            type: 'between',
-            value: [parseValue(filter.value, column), parseValue(filter.value2, column)],
-          };
+          operatorType = 'between';
+          min = filter.value;
+          max = filter.value2;
           break;
         default:
           continue;
       }
 
-      result = Filter.apply(result, filter.column, condition);
+      const params: FilterParams = {
+        column: filter.column,
+        operator: operatorType,
+        value,
+        values,
+        min,
+        max,
+        pattern,
+      };
+
+      result = FilterOperator.apply(result, params);
     }
 
     return result;
@@ -119,21 +133,29 @@ export const QueryBuilder: React.FC = () => {
 
     if (aggregateFunctions.length === 0) return table;
 
-    return Aggregate.apply(table, aggregateFunctions, groupByColumns.length > 0 ? groupByColumns : undefined);
+    const params: AggregateParams = {
+      groupBy: groupByColumns,
+      aggregations: aggregateFunctions,
+    };
+
+    return AggregateOperator.apply(table, params);
   }, []);
 
   // Convert UI sorts to data pipeline sorts
   const convertSorts = useCallback((table: Table, sortConfigs: SortConfig[]): Table => {
+    let result = table;
     const enabledSorts = sortConfigs.filter((s) => s.enabled);
-    if (enabledSorts.length === 0) return table;
+    
+    // Apply sorts in order (first sort has highest priority)
+    for (const sortConfig of enabledSorts) {
+      const params: SortParams = {
+        column: sortConfig.column,
+        order: sortConfig.direction,
+      };
+      result = SortOperator.apply(result, params);
+    }
 
-    const sortOrders: SortOrder[] = enabledSorts.map((s) => ({
-      column: s.column,
-      direction: s.direction,
-      nullsFirst: s.nullsFirst,
-    }));
-
-    return Sort.apply(table, sortOrders);
+    return result;
   }, []);
 
   // Execute the query

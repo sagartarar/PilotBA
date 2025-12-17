@@ -37,7 +37,13 @@ function createChart(type: ChartType, data: ChartData): ChartPrimitive {
     case 'line':
       return new LineChart(data);
     case 'heatmap':
-      return new HeatMap(data);
+      // HeatMap needs special data format
+      return new HeatMap({
+        gridWidth: 10,
+        gridHeight: 10,
+        values: data.values,
+        colorMap: 'viridis',
+      });
     default:
       throw new Error(`Unknown chart type: ${type}`);
   }

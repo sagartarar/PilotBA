@@ -227,7 +227,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ table, metadata }) => 
                   className="border-b border-border/50 hover:bg-accent/50 transition-colors"
                 >
                   <td className="px-3 py-2 text-xs text-muted-foreground font-mono">
-                    {row.__index}
+                    {String(row.__index)}
                   </td>
                   {metadata.columns.map((col) => (
                     <td

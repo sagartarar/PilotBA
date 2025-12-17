@@ -367,3 +367,5 @@ const UploadButton: React.FC = () => {
   );
 };
 
+
+export default Dashboard;

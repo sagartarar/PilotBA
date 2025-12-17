@@ -74,7 +74,8 @@ export class ArrowParser {
 
       // Process each batch
       for await (const batch of reader) {
-        const table = new Table(batch);
+        // Convert batch to table - batch has schema and data
+        const table = new Table(batch.schema, Array.from({ length: batch.numCols }, (_, i) => batch.getChildAt(i)!));
         onBatch(table);
       }
     } catch (error) {

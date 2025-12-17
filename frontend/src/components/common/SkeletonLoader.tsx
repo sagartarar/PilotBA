@@ -6,6 +6,7 @@ export interface SkeletonProps {
   variant?: 'text' | 'circular' | 'rectangular';
   width?: string | number;
   height?: string | number;
+  style?: React.CSSProperties;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({
@@ -13,6 +14,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   variant = 'rectangular',
   width,
   height,
+  style,
 }) => {
   const variantStyles = {
     text: 'rounded h-4',
@@ -27,7 +29,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
         variantStyles[variant],
         className
       )}
-      style={{ width, height }}
+      style={{ width, height, ...style }}
     />
   );
 };

@@ -322,7 +322,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
           ) : isListOperator ? (
             <input
               type="text"
-              value={filter.value}
+              value={String(filter.value ?? '')}
               onChange={(e) => onUpdate({ value: e.target.value })}
               placeholder="value1, value2, ..."
               className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -330,7 +330,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
           ) : (
             <input
               type={columnType === 'numeric' ? 'number' : columnType === 'date' ? 'date' : 'text'}
-              value={filter.value}
+              value={String(filter.value ?? '')}
               onChange={(e) => onUpdate({ value: e.target.value })}
               placeholder="Value"
               className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -345,7 +345,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
           <span className="text-xs text-muted-foreground">and</span>
           <input
             type={columnType === 'numeric' ? 'number' : columnType === 'date' ? 'date' : 'text'}
-            value={filter.value2 || ''}
+            value={String(filter.value2 ?? '')}
             onChange={(e) => onUpdate({ value2: e.target.value })}
             placeholder="Value"
             className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"

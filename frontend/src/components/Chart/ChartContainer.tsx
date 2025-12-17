@@ -94,7 +94,13 @@ export const ChartContainer: React.FC<ChartContainerProps> = ({
           chart = new LineChart(data);
           break;
         case 'heatmap':
-          chart = new HeatMap(data);
+          // HeatMap needs special data format
+          chart = new HeatMap({
+            gridWidth: 10,
+            gridHeight: 10,
+            values: data.values,
+            colorMap: 'viridis',
+          });
           break;
         default:
           throw new Error(`Unknown chart type: ${config.type}`);

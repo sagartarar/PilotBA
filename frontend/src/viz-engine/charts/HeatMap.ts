@@ -6,12 +6,15 @@
  * @see Design Doc: 01-webgl-rendering-engine.md (Lines 475-535)
  */
 
-import { ChartPrimitive, ChartData, BoundingBox } from './ChartPrimitive';
+import { ChartPrimitive } from './ChartPrimitive';
 import { Renderer } from '../Renderer';
+import { Camera } from '../Camera';
+import { ChartData, BoundingBox } from '../types';
 
-export interface HeatMapData extends ChartData {
+export interface HeatMapData {
   gridWidth: number;
   gridHeight: number;
+  values: number[][] | { get(i: number): number };
   colorMap?: 'viridis' | 'plasma' | 'inferno' | 'magma' | 'turbo';
 }
 
@@ -26,10 +29,18 @@ export class HeatMap extends ChartPrimitive {
   private colorMapTexture: WebGLTexture | null = null;
   private minValue: number = 0;
   private maxValue: number = 1;
+  private geometryBuffer: WebGLBuffer | null = null;
+  private heatMapData: HeatMapData;
 
   constructor(data: HeatMapData) {
-    super(data);
-    this.shaderName = 'heatmap';
+    // Create a minimal ChartData for parent
+    const chartData: ChartData = {
+      columns: ['x', 'y', 'value'],
+      values: [],
+      encodings: { x: 'x', y: 'y' }
+    };
+    super(chartData);
+    this.heatMapData = data;
     this.gridWidth = data.gridWidth;
     this.gridHeight = data.gridHeight;
     this.colorMap = data.colorMap || 'viridis';
@@ -56,12 +67,20 @@ export class HeatMap extends ChartPrimitive {
   /**
    * Updates heatmap (if data changed).
    */
-  update(deltaTime: number): void {
+  update(_deltaTime: number): void {
     if (!this.isDirty) return;
 
     // Re-upload data to texture
     // In production, you would only update changed cells
     this.isDirty = false;
+  }
+
+  /**
+   * Renders the heatmap.
+   */
+  render(_renderer: Renderer, _camera: Camera): void {
+    // Heatmap rendering is handled by the renderer using textures
+    // The renderer will call getDataTexture() and getColorMapTexture()
   }
 
   /**
@@ -116,12 +135,14 @@ export class HeatMap extends ChartPrimitive {
    */
   private extractGridData(): Float32Array {
     const gridData = new Float32Array(this.gridWidth * this.gridHeight);
+    const values = this.heatMapData.values;
+    const length = Array.isArray(values) ? values.length : this.gridWidth * this.gridHeight;
 
     // Assuming data.values is a flat array in row-major order
-    for (let i = 0; i < this.data.values.length && i < gridData.length; i++) {
-      const value = Array.isArray(this.data.values)
-        ? this.data.values[i][0]
-        : this.data.values.get(i);
+    for (let i = 0; i < length && i < gridData.length; i++) {
+      const value = Array.isArray(values)
+        ? values[i]?.[0] ?? 0
+        : (values as { get(i: number): number }).get(i);
 
       gridData[i] = typeof value === 'number' ? value : 0;
 
@@ -331,7 +352,10 @@ export class HeatMap extends ChartPrimitive {
   /**
    * Cleanup resources.
    */
-  destroy(gl: WebGL2RenderingContext): void {
+  destroy(renderer: Renderer): void {
+    const gl = renderer.getGL();
+    if (!gl) return;
+
     if (this.dataTexture) {
       gl.deleteTexture(this.dataTexture);
       this.dataTexture = null;

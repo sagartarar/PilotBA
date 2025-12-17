@@ -118,7 +118,7 @@ export class ExecutionEngine {
    * Selects specific columns from table.
    */
   private selectColumns(table: Table, columns: string[]): Table {
-    return table.select(columns);
+    return table.select(...columns);
   }
 
   /**

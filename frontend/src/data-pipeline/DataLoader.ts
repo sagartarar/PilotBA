@@ -1,4 +1,4 @@
-import { Table, tableFromArrays, Field, DataType, Schema, Utf8, Int32, Float64, Bool } from 'apache-arrow';
+import { Table, tableFromArrays, tableFromIPC, Field, DataType, Schema, Utf8, Int32, Float64, Bool } from 'apache-arrow';
 import { DataSource, LoadOptions } from './types';
 
 export class DataLoader {
@@ -84,8 +84,8 @@ export class DataLoader {
   }
 
   async loadArrow(buffer: ArrayBuffer): Promise<Table> {
-    // Load Arrow IPC format
-    const table = Table.from(new Uint8Array(buffer));
+    // Load Arrow IPC format using tableFromIPC
+    const table = tableFromIPC(new Uint8Array(buffer));
     return table;
   }
 

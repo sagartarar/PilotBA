@@ -8,11 +8,11 @@
 
 import { Table, Vector, makeVector, Bool, Utf8, predicate } from 'apache-arrow';
 
-export type FilterOperator = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'between' | 'like' | 'notNull' | 'isNull';
+export type FilterOperatorType = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'between' | 'like' | 'notNull' | 'isNull';
 
 export interface FilterParams {
   column: string;
-  operator: FilterOperator;
+  operator: FilterOperatorType;
   value?: any;
   values?: any[]; // For 'in' operator
   min?: any;      // For 'between' operator

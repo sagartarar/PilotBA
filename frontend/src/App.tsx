@@ -1,9 +1,14 @@
+import React, { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AppLayout } from './components/Layout';
-import { Dashboard } from './components/Dashboard';
 import { PerformanceMonitor } from './components/Debug';
-import { ErrorBoundary } from './components/common';
+import { ErrorBoundary, LoadingSpinner } from './components/common';
 import { useUIStore } from './store';
+
+// Lazy load heavy components for code splitting
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'));
+const DatasetManager = lazy(() => import('./components/Data/DatasetManager'));
+const QueryBuilder = lazy(() => import('./components/Query/QueryBuilder'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -14,41 +19,34 @@ const queryClient = new QueryClient({
   },
 });
 
-// View router component
+// Loading fallback component
+const PageLoader: React.FC = () => (
+  <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
+    <LoadingSpinner size="lg" label="Loading..." />
+  </div>
+);
+
+// View router component with lazy loading
 const ViewRouter: React.FC = () => {
   const { currentView } = useUIStore();
 
-  switch (currentView) {
-    case 'dashboard':
-      return <Dashboard />;
-    case 'data':
-      return <DataView />;
-    case 'query':
-      return <QueryView />;
-    case 'settings':
-      return <SettingsView />;
-    default:
-      return <Dashboard />;
-  }
+  return (
+    <Suspense fallback={<PageLoader />}>
+      {currentView === 'dashboard' && <Dashboard />}
+      {currentView === 'data' && (
+        <div className="h-[calc(100vh-8rem)]">
+          <DatasetManager />
+        </div>
+      )}
+      {currentView === 'query' && (
+        <div className="h-[calc(100vh-8rem)]">
+          <QueryBuilder />
+        </div>
+      )}
+      {currentView === 'settings' && <SettingsView />}
+    </Suspense>
+  );
 };
-
-// Import the new components
-import { DatasetManager } from './components/Data';
-import { QueryBuilder } from './components/Query';
-
-// Data Management View
-const DataView: React.FC = () => (
-  <div className="h-[calc(100vh-8rem)]">
-    <DatasetManager />
-  </div>
-);
-
-// Query Builder View
-const QueryView: React.FC = () => (
-  <div className="h-[calc(100vh-8rem)]">
-    <QueryBuilder />
-  </div>
-);
 
 const SettingsView: React.FC = () => (
   <div className="space-y-6">
@@ -70,6 +68,7 @@ const ThemeSettings: React.FC = () => {
           <button
             key={t}
             onClick={() => setTheme(t)}
+            aria-pressed={theme === t}
             className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               theme === t
                 ? 'bg-primary text-primary-foreground'

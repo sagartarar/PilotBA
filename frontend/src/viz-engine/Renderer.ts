@@ -15,6 +15,20 @@ export class Renderer {
     this.drawCallCount = 0;
   }
 
+  /**
+   * Gets the WebGL2 context.
+   */
+  getGL(): WebGL2RenderingContext {
+    return this.gl;
+  }
+
+  /**
+   * Gets the WebGL2 context (alias for getGL).
+   */
+  getContext(): WebGL2RenderingContext {
+    return this.gl;
+  }
+
   compileShader(name: string, vertexSource: string, fragmentSource: string): void {
     const gl = this.gl;
 
