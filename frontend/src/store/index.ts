@@ -14,4 +14,9 @@ export {
   type View,
   type PerformanceMetrics,
 } from './uiStore';
+export {
+  useLayoutStore,
+  type LayoutItem,
+  type DashboardLayout,
+} from './layoutStore';
 

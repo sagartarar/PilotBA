@@ -13,6 +13,9 @@ export * from './Data';
 // Chart
 export * from './Chart';
 
+// Query
+export * from './Query';
+
 // Dashboard
 export * from './Dashboard';
 

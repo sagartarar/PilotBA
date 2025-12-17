@@ -32,32 +32,21 @@ const ViewRouter: React.FC = () => {
   }
 };
 
-// Placeholder views for now
+// Import the new components
+import { DatasetManager } from './components/Data';
+import { QueryBuilder } from './components/Query';
+
+// Data Management View
 const DataView: React.FC = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-foreground">Data Management</h1>
-    <p className="text-muted-foreground">
-      Manage your datasets, view column statistics, and explore your data.
-    </p>
-    <div className="p-8 border-2 border-dashed border-border rounded-lg text-center">
-      <p className="text-muted-foreground">
-        Select a dataset from the sidebar to view its contents.
-      </p>
-    </div>
+  <div className="h-[calc(100vh-8rem)]">
+    <DatasetManager />
   </div>
 );
 
+// Query Builder View
 const QueryView: React.FC = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-foreground">Query Builder</h1>
-    <p className="text-muted-foreground">
-      Build queries with filters, aggregations, and transformations.
-    </p>
-    <div className="p-8 border-2 border-dashed border-border rounded-lg text-center">
-      <p className="text-muted-foreground">
-        Query builder coming soon...
-      </p>
-    </div>
+  <div className="h-[calc(100vh-8rem)]">
+    <QueryBuilder />
   </div>
 );
 
