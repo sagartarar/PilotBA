@@ -1,0 +1,504 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`App Component - Visual Regression > matches snapshot 1`] = `
+<div>
+  <div
+    class="min-h-screen bg-background"
+  >
+    <header
+      class="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60"
+    >
+      <div
+        class="flex h-14 items-center px-4 gap-4"
+      >
+        <button
+          aria-label="Toggle menu"
+          class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 md:hidden"
+        >
+          <svg
+            fill="none"
+            height="20"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+            width="20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <line
+              x1="4"
+              x2="20"
+              y1="12"
+              y2="12"
+            />
+            <line
+              x1="4"
+              x2="20"
+              y1="6"
+              y2="6"
+            />
+            <line
+              x1="4"
+              x2="20"
+              y1="18"
+              y2="18"
+            />
+          </svg>
+        </button>
+        <div
+          class="flex items-center gap-2"
+        >
+          <div
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-primary-foreground font-bold text-sm"
+          >
+            P
+          </div>
+          <span
+            class="font-semibold text-lg text-foreground hidden sm:inline"
+          >
+            PilotBA
+          </span>
+        </div>
+        <div
+          class="flex-1"
+        />
+        <div
+          class="flex items-center gap-2"
+        >
+          <button
+            aria-label="Toggle performance monitor"
+            class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+          >
+            <svg
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 20V10"
+              />
+              <path
+                d="M18 20V4"
+              />
+              <path
+                d="M6 20v-4"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Current theme: system. Click to change."
+            class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+          >
+            <svg
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect
+                height="14"
+                rx="2"
+                width="20"
+                x="2"
+                y="3"
+              />
+              <line
+                x1="8"
+                x2="16"
+                y1="21"
+                y2="21"
+              />
+              <line
+                x1="12"
+                x2="12"
+                y1="17"
+                y2="21"
+              />
+            </svg>
+          </button>
+          <button
+            aria-label="Help"
+            class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+          >
+            <svg
+              fill="none"
+              height="18"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              width="18"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+              />
+              <path
+                d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+              />
+              <path
+                d="M12 17h.01"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+    <div
+      class="flex"
+    >
+      <div
+        class="fixed inset-0 z-30 bg-black/50 md:hidden"
+      />
+      <aside
+        class="fixed md:sticky top-14 z-30 h-[calc(100vh-3.5rem)] border-r border-border bg-card transition-all duration-300 w-64 translate-x-0"
+      >
+        <div
+          class="flex flex-col h-full overflow-hidden"
+        >
+          <nav
+            class="flex-1 p-2 space-y-1 overflow-y-auto"
+          >
+            <button
+              class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors bg-primary text-primary-foreground"
+            >
+              <svg
+                fill="none"
+                height="20"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  height="9"
+                  rx="1"
+                  width="7"
+                  x="3"
+                  y="3"
+                />
+                <rect
+                  height="5"
+                  rx="1"
+                  width="7"
+                  x="14"
+                  y="3"
+                />
+                <rect
+                  height="9"
+                  rx="1"
+                  width="7"
+                  x="14"
+                  y="12"
+                />
+                <rect
+                  height="5"
+                  rx="1"
+                  width="7"
+                  x="3"
+                  y="16"
+                />
+              </svg>
+              <span
+                class="transition-opacity opacity-100"
+              >
+                Dashboard
+              </span>
+            </button>
+            <button
+              class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg
+                fill="none"
+                height="20"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M3 3v18h18"
+                />
+                <path
+                  d="M18 17V9"
+                />
+                <path
+                  d="M13 17V5"
+                />
+                <path
+                  d="M8 17v-3"
+                />
+              </svg>
+              <span
+                class="transition-opacity opacity-100"
+              >
+                Data
+              </span>
+            </button>
+            <button
+              class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg
+                fill="none"
+                height="20"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <polyline
+                  points="16 18 22 12 16 6"
+                />
+                <polyline
+                  points="8 6 2 12 8 18"
+                />
+              </svg>
+              <span
+                class="transition-opacity opacity-100"
+              >
+                Query
+              </span>
+            </button>
+            <button
+              class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-accent"
+            >
+              <svg
+                fill="none"
+                height="20"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="20"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="3"
+                />
+              </svg>
+              <span
+                class="transition-opacity opacity-100"
+              >
+                Settings
+              </span>
+            </button>
+          </nav>
+          <div
+            class="hidden md:block p-2 border-t border-border"
+          >
+            <button
+              aria-label="Collapse sidebar"
+              class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-8 px-3 text-xs w-full justify-center"
+            >
+              <svg
+                class="transition-transform"
+                fill="none"
+                height="18"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                viewBox="0 0 24 24"
+                width="18"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="m11 17-5-5 5-5"
+                />
+                <path
+                  d="m18 17-5-5 5-5"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <main
+        class="flex-1 min-h-[calc(100vh-3.5rem-2rem)] transition-all duration-300 md:ml-0"
+      >
+        <div
+          class="p-4 md:p-6 lg:p-8"
+        >
+          <div
+            class="flex items-center justify-center h-[calc(100vh-8rem)]"
+          >
+            <div
+              aria-label="Loading..."
+              aria-live="polite"
+              class="flex flex-col items-center justify-center gap-2"
+              role="status"
+            >
+              <svg
+                aria-hidden="true"
+                class="animate-spin text-primary h-12 w-12"
+                fill="none"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  fill="currentColor"
+                />
+              </svg>
+              <span
+                class="text-sm text-muted-foreground"
+              >
+                Loading...
+              </span>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+    <footer
+      class="sticky bottom-0 z-20 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60"
+    >
+      <div
+        class="flex items-center justify-between h-8 px-4 text-xs text-muted-foreground"
+      >
+        <div
+          class="flex items-center gap-4"
+        >
+          <span>
+            No dataset loaded
+          </span>
+        </div>
+        <div
+          class="flex items-center gap-4"
+        >
+          <span
+            class="flex items-center gap-1"
+          >
+            <span
+              class="text-destructive"
+            >
+              0
+               FPS
+            </span>
+          </span>
+        </div>
+      </div>
+    </footer>
+  </div>
+</div>
+`;
+
+exports[`App Component - Visual Regression > matches snapshot 2`] = `
+<div>
+  <div
+    class="flex flex-col items-center justify-center min-h-[400px] p-8 text-center"
+  >
+    <div
+      class="mb-6 text-destructive"
+    >
+      <svg
+        fill="none"
+        height="64"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        viewBox="0 0 24 24"
+        width="64"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <circle
+          cx="12"
+          cy="12"
+          r="10"
+        />
+        <line
+          x1="12"
+          x2="12"
+          y1="8"
+          y2="12"
+        />
+        <line
+          x1="12"
+          x2="12.01"
+          y1="16"
+          y2="16"
+        />
+      </svg>
+    </div>
+    <h2
+      class="text-2xl font-bold text-foreground mb-2"
+    >
+      Something went wrong
+    </h2>
+    <p
+      class="text-muted-foreground mb-6 max-w-md"
+    >
+      Cannot read properties of undefined (reading 'fps')
+    </p>
+    <div
+      class="flex gap-4"
+    >
+      <button
+        class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm h-10 px-4 text-sm"
+      >
+        Try Again
+      </button>
+      <button
+        class="inline-flex items-center justify-center gap-2 rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-border bg-transparent hover:bg-accent hover:text-accent-foreground h-10 px-4 text-sm"
+      >
+        Reload Page
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`App Component - Visual Regression > matches snapshot for basic structure 1`] = `
+<div>
+  <div
+    data-testid="app-root"
+  >
+    <header>
+      PilotBA
+    </header>
+    <main>
+      App Content
+    </main>
+  </div>
+</div>
+`;

@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { tableFromArrays, Table, makeVector, Vector } from 'apache-arrow';
+import { tableFromArrays, Table, vectorFromArray, Vector } from 'apache-arrow';
 import { Statistics, ColumnStats, TableStats } from './Statistics';
 
 // ============================================================================
@@ -32,7 +32,7 @@ function createTestTable(data: Record<string, any[]>): Table {
  * Creates a vector from array.
  */
 function createVector(data: any[]): Vector {
-  return makeVector(data);
+  return vectorFromArray(data);
 }
 
 /**

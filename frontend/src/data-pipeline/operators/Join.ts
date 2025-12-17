@@ -4,7 +4,7 @@
  * Implements various types of SQL-like joins between Arrow Tables.
  */
 
-import { Table, Vector, tableFromArrays, makeVector, Schema, Field } from 'apache-arrow';
+import { Table, Vector, tableFromArrays, Schema, Field } from 'apache-arrow';
 
 export type JoinType = 'inner' | 'left' | 'right' | 'full' | 'cross';
 

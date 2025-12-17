@@ -6,7 +6,7 @@
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 322-387)
  */
 
-import { Table, Vector, tableFromArrays, makeVector } from 'apache-arrow';
+import { Table, Vector, tableFromArrays } from 'apache-arrow';
 
 export type AggregateFunction = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'stddev' | 'variance' | 'first' | 'last';
 

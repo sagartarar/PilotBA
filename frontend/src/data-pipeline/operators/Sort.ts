@@ -6,7 +6,7 @@
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 389-421)
  */
 
-import { Table, Vector } from 'apache-arrow';
+import { Table, Vector, tableFromArrays } from 'apache-arrow';
 
 export type SortOrder = 'asc' | 'desc';
 
@@ -151,22 +151,20 @@ export class SortOperator {
    * Reorders table according to index array.
    */
   private static reorderTable(table: Table, indices: Uint32Array): Table {
-    const reorderedColumns: Vector[] = [];
+    const reorderedData: Record<string, any[]> = {};
 
     for (const field of table.schema.fields) {
       const column = table.getChild(field.name)!;
-      const reorderedData: any[] = [];
+      const columnData: any[] = [];
 
       for (let i = 0; i < indices.length; i++) {
-        reorderedData.push(column.get(indices[i]));
+        columnData.push(column.get(indices[i]));
       }
 
-      // Create new vector from reordered data
-      const { makeVector } = require('apache-arrow');
-      reorderedColumns.push(makeVector(reorderedData));
+      reorderedData[field.name] = columnData;
     }
 
-    return new Table(table.schema, reorderedColumns);
+    return tableFromArrays(reorderedData);
   }
 
   /**

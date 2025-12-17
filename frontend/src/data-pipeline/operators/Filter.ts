@@ -6,7 +6,7 @@
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 282-320)
  */
 
-import { Table, Vector, makeVector, Bool, Utf8, predicate } from 'apache-arrow';
+import { Table, Vector, tableFromArrays, Bool, Utf8, predicate } from 'apache-arrow';
 
 export type FilterOperatorType = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'between' | 'like' | 'notNull' | 'isNull';
 
@@ -284,29 +284,28 @@ export class FilterOperator {
       }
     }
 
+    // Build result data for each column
+    const resultData: Record<string, any[]> = {};
+    
+    for (const field of table.schema.fields) {
+      resultData[field.name] = [];
+    }
+
     // If no rows match, return empty table with same schema
     if (indices.length === 0) {
-      const emptyColumns: any[] = [];
-      table.schema.fields.forEach(field => {
-        emptyColumns.push(makeVector([]));
-      });
-      return new Table(table.schema, emptyColumns);
+      return tableFromArrays(resultData);
     }
 
     // Filter all columns
-    const filteredColumns: Vector[] = [];
     for (const field of table.schema.fields) {
       const column = table.getChild(field.name)!;
-      const filteredData: any[] = [];
       
       for (const index of indices) {
-        filteredData.push(column.get(index));
+        resultData[field.name].push(column.get(index));
       }
-      
-      filteredColumns.push(makeVector(filteredData));
     }
 
-    return new Table(table.schema, filteredColumns);
+    return tableFromArrays(resultData);
   }
 
   /**
