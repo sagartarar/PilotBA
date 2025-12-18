@@ -4,6 +4,7 @@ import { clsx } from 'clsx';
 import { Button } from '../common/Button';
 import { Input } from '../common/Input';
 import { Select } from '../common/Select';
+import { sanitizeDisplay, sanitizeFileName } from '../../utils/sanitize';
 
 export interface DataTableProps {
   table: Table;
@@ -129,26 +130,33 @@ export const DataTable: React.FC<DataTableProps> = React.memo(({
       return value.toLocaleString(undefined, { maximumFractionDigits: 4 });
     }
     if (typeof value === 'boolean') return value ? 'true' : 'false';
-    return String(value);
+    // Sanitize string values to prevent XSS
+    return sanitizeDisplay(value);
   };
 
   const exportToCSV = useCallback(() => {
-    const headers = columns.map(c => c.name).join(',');
+    const headers = columns.map(c => sanitizeDisplay(c.name)).join(',');
     const rows = sortedData.map(row => 
       columns.map(c => {
         const val = row[c.name];
         if (val === null || val === undefined) return '';
-        const str = String(val);
-        return str.includes(',') ? `"${str}"` : str;
+        // Sanitize and escape CSV values
+        const str = sanitizeDisplay(val);
+        // Escape quotes and wrap in quotes if contains special chars
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
       }).join(',')
     );
     const csv = [headers, ...rows].join('\n');
     
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'export.csv';
+    // Sanitize filename for download
+    a.download = sanitizeFileName('export.csv');
     a.click();
     URL.revokeObjectURL(url);
   }, [columns, sortedData]);

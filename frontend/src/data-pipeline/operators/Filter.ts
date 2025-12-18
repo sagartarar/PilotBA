@@ -1,22 +1,40 @@
 /**
  * Filter operator with vectorized operations.
- * 
+ *
  * Implements efficient filtering of Arrow Tables using vectorized comparisons.
- * 
+ *
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 282-320)
  */
 
-import { Table, Vector, tableFromArrays, Bool, Utf8, predicate } from 'apache-arrow';
+import {
+  Table,
+  Vector,
+  tableFromArrays,
+  Bool,
+  Utf8,
+  predicate,
+} from "apache-arrow";
 
-export type FilterOperatorType = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'in' | 'between' | 'like' | 'notNull' | 'isNull';
+export type FilterOperatorType =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "lt"
+  | "gte"
+  | "lte"
+  | "in"
+  | "between"
+  | "like"
+  | "notNull"
+  | "isNull";
 
 export interface FilterParams {
   column: string;
   operator: FilterOperatorType;
   value?: any;
   values?: any[]; // For 'in' operator
-  min?: any;      // For 'between' operator
-  max?: any;      // For 'between' operator
+  min?: any; // For 'between' operator
+  max?: any; // For 'between' operator
   pattern?: string; // For 'like' operator
 }
 
@@ -26,7 +44,7 @@ export interface FilterParams {
 export class FilterOperator {
   /**
    * Applies filter to table.
-   * 
+   *
    * @param table - Input Arrow Table
    * @param params - Filter parameters
    * @returns Filtered table
@@ -47,7 +65,7 @@ export class FilterOperator {
 
   /**
    * Applies multiple filters with AND logic.
-   * 
+   *
    * @param table - Input Arrow Table
    * @param filters - Array of filter parameters
    * @returns Filtered table
@@ -70,39 +88,39 @@ export class FilterOperator {
     const mask = new Uint8Array(length);
 
     switch (params.operator) {
-      case 'eq':
+      case "eq":
         return this.maskEqual(column, params.value!);
-      
-      case 'ne':
+
+      case "ne":
         return this.maskNotEqual(column, params.value!);
-      
-      case 'gt':
+
+      case "gt":
         return this.maskGreaterThan(column, params.value!);
-      
-      case 'lt':
+
+      case "lt":
         return this.maskLessThan(column, params.value!);
-      
-      case 'gte':
+
+      case "gte":
         return this.maskGreaterThanOrEqual(column, params.value!);
-      
-      case 'lte':
+
+      case "lte":
         return this.maskLessThanOrEqual(column, params.value!);
-      
-      case 'in':
+
+      case "in":
         return this.maskIn(column, params.values!);
-      
-      case 'between':
+
+      case "between":
         return this.maskBetween(column, params.min!, params.max!);
-      
-      case 'like':
+
+      case "like":
         return this.maskLike(column, params.pattern!);
-      
-      case 'notNull':
+
+      case "notNull":
         return this.maskNotNull(column);
-      
-      case 'isNull':
+
+      case "isNull":
         return this.maskIsNull(column);
-      
+
       default:
         throw new Error(`Unknown filter operator: ${params.operator}`);
     }
@@ -113,12 +131,12 @@ export class FilterOperator {
    */
   private static maskEqual(column: Vector, value: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val === value) ? 1 : 0;
+      mask[i] = val === value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -127,12 +145,12 @@ export class FilterOperator {
    */
   private static maskNotEqual(column: Vector, value: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== value) ? 1 : 0;
+      mask[i] = val !== value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -141,12 +159,12 @@ export class FilterOperator {
    */
   private static maskGreaterThan(column: Vector, value: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val > value) ? 1 : 0;
+      mask[i] = val !== null && val > value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -155,26 +173,29 @@ export class FilterOperator {
    */
   private static maskLessThan(column: Vector, value: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val < value) ? 1 : 0;
+      mask[i] = val !== null && val < value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
   /**
    * Vectorized greater than or equal comparison.
    */
-  private static maskGreaterThanOrEqual(column: Vector, value: any): Uint8Array {
+  private static maskGreaterThanOrEqual(
+    column: Vector,
+    value: any
+  ): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val >= value) ? 1 : 0;
+      mask[i] = val !== null && val >= value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -183,12 +204,12 @@ export class FilterOperator {
    */
   private static maskLessThanOrEqual(column: Vector, value: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val <= value) ? 1 : 0;
+      mask[i] = val !== null && val <= value ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -198,12 +219,12 @@ export class FilterOperator {
   private static maskIn(column: Vector, values: any[]): Uint8Array {
     const mask = new Uint8Array(column.length);
     const valueSet = new Set(values);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
       mask[i] = valueSet.has(val) ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -212,12 +233,12 @@ export class FilterOperator {
    */
   private static maskBetween(column: Vector, min: any, max: any): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val >= min && val <= max) ? 1 : 0;
+      mask[i] = val !== null && val >= min && val <= max ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -226,21 +247,21 @@ export class FilterOperator {
    */
   private static maskLike(column: Vector, pattern: string): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     // Convert SQL LIKE pattern to RegExp
     // % -> .*, _ -> .
     const regexPattern = pattern
-      .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex special chars
-      .replace(/%/g, '.*')                     // % matches any sequence
-      .replace(/_/g, '.');                     // _ matches single char
-    
-    const regex = new RegExp(`^${regexPattern}$`, 'i');
-    
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&") // Escape regex special chars
+      .replace(/%/g, ".*") // % matches any sequence
+      .replace(/_/g, "."); // _ matches single char
+
+    const regex = new RegExp(`^${regexPattern}$`, "i");
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && regex.test(String(val))) ? 1 : 0;
+      mask[i] = val !== null && regex.test(String(val)) ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -249,12 +270,12 @@ export class FilterOperator {
    */
   private static maskNotNull(column: Vector): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val !== null && val !== undefined) ? 1 : 0;
+      mask[i] = val !== null && val !== undefined ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -263,12 +284,12 @@ export class FilterOperator {
    */
   private static maskIsNull(column: Vector): Uint8Array {
     const mask = new Uint8Array(column.length);
-    
+
     for (let i = 0; i < column.length; i++) {
       const val = column.get(i);
-      mask[i] = (val === null || val === undefined) ? 1 : 0;
+      mask[i] = val === null || val === undefined ? 1 : 0;
     }
-    
+
     return mask;
   }
 
@@ -286,7 +307,7 @@ export class FilterOperator {
 
     // Build result data for each column
     const resultData: Record<string, any[]> = {};
-    
+
     for (const field of table.schema.fields) {
       resultData[field.name] = [];
     }
@@ -299,7 +320,7 @@ export class FilterOperator {
     // Filter all columns
     for (const field of table.schema.fields) {
       const column = table.getChild(field.name)!;
-      
+
       for (const index of indices) {
         resultData[field.name].push(column.get(index));
       }
@@ -313,7 +334,7 @@ export class FilterOperator {
    */
   static combineMasksAnd(masks: Uint8Array[]): Uint8Array {
     if (masks.length === 0) {
-      throw new Error('No masks to combine');
+      throw new Error("No masks to combine");
     }
 
     const result = new Uint8Array(masks[0].length);
@@ -333,7 +354,7 @@ export class FilterOperator {
    */
   static combineMasksOr(masks: Uint8Array[]): Uint8Array {
     if (masks.length === 0) {
-      throw new Error('No masks to combine');
+      throw new Error("No masks to combine");
     }
 
     const result = new Uint8Array(masks[0].length);
@@ -347,4 +368,3 @@ export class FilterOperator {
     return result;
   }
 }
-

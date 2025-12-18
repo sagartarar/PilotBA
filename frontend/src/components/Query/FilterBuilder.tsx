@@ -1,7 +1,9 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { clsx } from 'clsx';
 import { ColumnInfo } from '../../store/dataStore';
 import { Button } from '../common/Button';
+import { validateFilterValue, validateColumnName } from '../../utils/sanitize';
+import { errorService } from '../../services';
 
 export type FilterOperator =
   | 'eq'
@@ -235,9 +237,34 @@ const FilterRow: React.FC<FilterRowProps> = ({
   onRemove,
   onToggle,
 }) => {
+  const [validationError, setValidationError] = useState<string | null>(null);
   const needsValue = !['isNull', 'isNotNull'].includes(filter.operator);
   const needsSecondValue = filter.operator === 'between';
   const isListOperator = ['in', 'notIn'].includes(filter.operator);
+
+  // Validate and update value with security check
+  const handleValueChange = (value: string, isSecondValue = false) => {
+    // For text inputs, validate against injection patterns
+    if (columnType === 'text' || isListOperator) {
+      const validation = validateFilterValue(value);
+      if (!validation.valid) {
+        setValidationError(validation.error || 'Invalid input');
+        errorService.warn('Invalid filter value blocked', {
+          column: filter.column,
+          value,
+          error: validation.error,
+        });
+        return;
+      }
+      setValidationError(null);
+    }
+
+    if (isSecondValue) {
+      onUpdate({ value2: value });
+    } else {
+      onUpdate({ value });
+    }
+  };
 
   return (
     <div
@@ -320,21 +347,37 @@ const FilterRow: React.FC<FilterRowProps> = ({
               <option value="false">False</option>
             </select>
           ) : isListOperator ? (
-            <input
-              type="text"
-              value={String(filter.value ?? '')}
-              onChange={(e) => onUpdate({ value: e.target.value })}
-              placeholder="value1, value2, ..."
-              className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+            <div className="flex-1 min-w-0 relative">
+              <input
+                type="text"
+                value={String(filter.value ?? '')}
+                onChange={(e) => handleValueChange(e.target.value)}
+                placeholder="value1, value2, ..."
+                className={clsx(
+                  "w-full px-2 py-1.5 text-sm rounded-md border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2",
+                  validationError ? "border-destructive focus:ring-destructive/50" : "border-border focus:ring-primary/50"
+                )}
+              />
+              {validationError && (
+                <span className="absolute -bottom-5 left-0 text-xs text-destructive">{validationError}</span>
+              )}
+            </div>
           ) : (
-            <input
-              type={columnType === 'numeric' ? 'number' : columnType === 'date' ? 'date' : 'text'}
-              value={String(filter.value ?? '')}
-              onChange={(e) => onUpdate({ value: e.target.value })}
-              placeholder="Value"
-              className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+            <div className="flex-1 min-w-0 relative">
+              <input
+                type={columnType === 'numeric' ? 'number' : columnType === 'date' ? 'date' : 'text'}
+                value={String(filter.value ?? '')}
+                onChange={(e) => handleValueChange(e.target.value)}
+                placeholder="Value"
+                className={clsx(
+                  "w-full px-2 py-1.5 text-sm rounded-md border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2",
+                  validationError ? "border-destructive focus:ring-destructive/50" : "border-border focus:ring-primary/50"
+                )}
+              />
+              {validationError && (
+                <span className="absolute -bottom-5 left-0 text-xs text-destructive">{validationError}</span>
+              )}
+            </div>
           )}
         </>
       )}
@@ -346,7 +389,7 @@ const FilterRow: React.FC<FilterRowProps> = ({
           <input
             type={columnType === 'numeric' ? 'number' : columnType === 'date' ? 'date' : 'text'}
             value={String(filter.value2 ?? '')}
-            onChange={(e) => onUpdate({ value2: e.target.value })}
+            onChange={(e) => handleValueChange(e.target.value, true)}
             placeholder="Value"
             className="flex-1 min-w-0 px-2 py-1.5 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />

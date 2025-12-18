@@ -1,14 +1,14 @@
 /**
  * Sort operator with efficient algorithms.
- * 
+ *
  * Implements sorting of Arrow Tables using efficient index-based sorting.
- * 
+ *
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 389-421)
  */
 
-import { Table, Vector, tableFromArrays } from 'apache-arrow';
+import { Table, Vector, tableFromArrays } from "apache-arrow";
 
-export type SortOrder = 'asc' | 'desc';
+export type SortOrder = "asc" | "desc";
 
 export interface SortParams {
   column: string;
@@ -21,7 +21,7 @@ export interface SortParams {
 export class SortOperator {
   /**
    * Applies sort to table.
-   * 
+   *
    * @param table - Input Arrow Table
    * @param params - Sort parameters
    * @returns Sorted table
@@ -48,7 +48,7 @@ export class SortOperator {
 
   /**
    * Applies multi-column sort to table.
-   * 
+   *
    * @param table - Input Arrow Table
    * @param sorts - Array of sort parameters (in priority order)
    * @returns Sorted table
@@ -81,7 +81,11 @@ export class SortOperator {
   /**
    * Sorts indices based on single column.
    */
-  private static sortIndices(indices: Uint32Array, column: Vector, order: SortOrder): void {
+  private static sortIndices(
+    indices: Uint32Array,
+    column: Vector,
+    order: SortOrder
+  ): void {
     // Use Array.prototype.sort for flexibility
     const indicesArray = Array.from(indices);
 
@@ -99,7 +103,7 @@ export class SortOperator {
       else if (valA > valB) comparison = 1;
 
       // Apply order
-      return order === 'asc' ? comparison : -comparison;
+      return order === "asc" ? comparison : -comparison;
     });
 
     // Copy back to Uint32Array
@@ -137,7 +141,7 @@ export class SortOperator {
         else if (valA > valB) comparison = 1;
 
         if (comparison !== 0) {
-          return sort.order === 'asc' ? comparison : -comparison;
+          return sort.order === "asc" ? comparison : -comparison;
         }
       }
 
@@ -169,9 +173,9 @@ export class SortOperator {
 
   /**
    * Partially sorts table (top-k).
-   * 
+   *
    * More efficient than full sort when only top N rows are needed.
-   * 
+   *
    * @param table - Input table
    * @param params - Sort parameters
    * @param limit - Number of rows to return
@@ -196,10 +200,14 @@ export class SortOperator {
 
   /**
    * Performs partial sort using min/max heap.
-   * 
+   *
    * Returns indices of top-k elements.
    */
-  private static partialSort(column: Vector, order: SortOrder, k: number): Uint32Array {
+  private static partialSort(
+    column: Vector,
+    order: SortOrder,
+    k: number
+  ): Uint32Array {
     const heap: Array<{ index: number; value: any }> = [];
 
     // Build heap
@@ -211,9 +219,8 @@ export class SortOperator {
         this.heapifyUp(heap, heap.length - 1, order);
       } else {
         // Compare with root
-        const shouldReplace = order === 'asc'
-          ? value < heap[0].value
-          : value > heap[0].value;
+        const shouldReplace =
+          order === "asc" ? value < heap[0].value : value > heap[0].value;
 
         if (shouldReplace) {
           heap[0] = { index: i, value };
@@ -234,12 +241,17 @@ export class SortOperator {
   /**
    * Heapify up (for heap construction).
    */
-  private static heapifyUp(heap: Array<{ index: number; value: any }>, index: number, order: SortOrder): void {
+  private static heapifyUp(
+    heap: Array<{ index: number; value: any }>,
+    index: number,
+    order: SortOrder
+  ): void {
     while (index > 0) {
       const parentIndex = Math.floor((index - 1) / 2);
-      const shouldSwap = order === 'asc'
-        ? heap[index].value > heap[parentIndex].value
-        : heap[index].value < heap[parentIndex].value;
+      const shouldSwap =
+        order === "asc"
+          ? heap[index].value > heap[parentIndex].value
+          : heap[index].value < heap[parentIndex].value;
 
       if (!shouldSwap) break;
 
@@ -251,7 +263,11 @@ export class SortOperator {
   /**
    * Heapify down (for heap maintenance).
    */
-  private static heapifyDown(heap: Array<{ index: number; value: any }>, index: number, order: SortOrder): void {
+  private static heapifyDown(
+    heap: Array<{ index: number; value: any }>,
+    index: number,
+    order: SortOrder
+  ): void {
     const length = heap.length;
 
     while (true) {
@@ -260,16 +276,18 @@ export class SortOperator {
       const right = 2 * index + 2;
 
       if (left < length) {
-        const shouldSwap = order === 'asc'
-          ? heap[left].value > heap[largest].value
-          : heap[left].value < heap[largest].value;
+        const shouldSwap =
+          order === "asc"
+            ? heap[left].value > heap[largest].value
+            : heap[left].value < heap[largest].value;
         if (shouldSwap) largest = left;
       }
 
       if (right < length) {
-        const shouldSwap = order === 'asc'
-          ? heap[right].value > heap[largest].value
-          : heap[right].value < heap[largest].value;
+        const shouldSwap =
+          order === "asc"
+            ? heap[right].value > heap[largest].value
+            : heap[right].value < heap[largest].value;
         if (shouldSwap) largest = right;
       }
 
@@ -280,4 +298,3 @@ export class SortOperator {
     }
   }
 }
-

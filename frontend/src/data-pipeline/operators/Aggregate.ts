@@ -1,14 +1,23 @@
 /**
  * Aggregate operator with GROUP BY support.
- * 
+ *
  * Implements efficient aggregation operations on Arrow Tables.
- * 
+ *
  * @see Design Doc: 02-data-processing-pipeline.md (Lines 322-387)
  */
 
-import { Table, Vector, tableFromArrays } from 'apache-arrow';
+import { Table, Vector, tableFromArrays } from "apache-arrow";
 
-export type AggregateFunction = 'sum' | 'avg' | 'count' | 'min' | 'max' | 'stddev' | 'variance' | 'first' | 'last';
+export type AggregateFunction =
+  | "sum"
+  | "avg"
+  | "count"
+  | "min"
+  | "max"
+  | "stddev"
+  | "variance"
+  | "first"
+  | "last";
 
 export interface AggregationSpec {
   column: string;
@@ -27,7 +36,7 @@ export interface AggregateParams {
 export class AggregateOperator {
   /**
    * Applies aggregation to table.
-   * 
+   *
    * @param table - Input Arrow Table
    * @param params - Aggregation parameters
    * @returns Aggregated table
@@ -43,26 +52,28 @@ export class AggregateOperator {
     const resultColumns: Record<string, any[]> = {};
 
     // Initialize result columns
-    params.groupBy.forEach(col => {
+    params.groupBy.forEach((col) => {
       resultColumns[col] = [];
     });
 
-    params.aggregations.forEach(agg => {
+    params.aggregations.forEach((agg) => {
       resultColumns[agg.alias] = [];
     });
 
     // Compute for each group
     groups.forEach((indices, key) => {
       // Add group key values
-      const keyParts = key.split('|');
+      const keyParts = key.split("|");
       params.groupBy.forEach((col, i) => {
         resultColumns[col].push(this.parseKeyPart(keyParts[i]));
       });
 
       // Compute aggregations
-      params.aggregations.forEach(agg => {
+      params.aggregations.forEach((agg) => {
         const column = table.getChild(agg.column)!;
-        const values = indices.map(i => column.get(i)).filter(v => v !== null && v !== undefined);
+        const values = indices
+          .map((i) => column.get(i))
+          .filter((v) => v !== null && v !== undefined);
         const result = this.computeAggregation(values, agg.function);
         resultColumns[agg.alias].push(result);
       });
@@ -78,7 +89,7 @@ export class AggregateOperator {
   private static validateColumns(table: Table, params: AggregateParams): void {
     const allColumns = new Set([
       ...params.groupBy,
-      ...params.aggregations.map(a => a.column),
+      ...params.aggregations.map((a) => a.column),
     ]);
 
     for (const col of allColumns) {
@@ -90,19 +101,22 @@ export class AggregateOperator {
 
   /**
    * Creates groups from table rows.
-   * 
+   *
    * @returns Map from group key to row indices
    */
-  private static createGroups(table: Table, groupBy: string[]): Map<string, number[]> {
+  private static createGroups(
+    table: Table,
+    groupBy: string[]
+  ): Map<string, number[]> {
     const groups = new Map<string, number[]>();
 
     for (let i = 0; i < table.numRows; i++) {
       const key = groupBy
-        .map(col => {
+        .map((col) => {
           const value = table.getChild(col)!.get(i);
           return this.serializeKeyPart(value);
         })
-        .join('|');
+        .join("|");
 
       if (!groups.has(key)) {
         groups.set(key, []);
@@ -118,9 +132,9 @@ export class AggregateOperator {
    */
   private static serializeKeyPart(value: any): string {
     if (value === null || value === undefined) {
-      return '__NULL__';
+      return "__NULL__";
     }
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return JSON.stringify(value);
     }
     return String(value);
@@ -130,10 +144,10 @@ export class AggregateOperator {
    * Parses a value from group key.
    */
   private static parseKeyPart(serialized: string): any {
-    if (serialized === '__NULL__') {
+    if (serialized === "__NULL__") {
       return null;
     }
-    if (serialized.startsWith('{') || serialized.startsWith('[')) {
+    if (serialized.startsWith("{") || serialized.startsWith("[")) {
       try {
         return JSON.parse(serialized);
       } catch {
@@ -151,37 +165,40 @@ export class AggregateOperator {
   /**
    * Computes aggregation for a group of values.
    */
-  private static computeAggregation(values: any[], func: AggregateFunction): any {
+  private static computeAggregation(
+    values: any[],
+    func: AggregateFunction
+  ): any {
     if (values.length === 0) {
       return null;
     }
 
     switch (func) {
-      case 'sum':
+      case "sum":
         return values.reduce((a, b) => a + b, 0);
 
-      case 'avg':
+      case "avg":
         return values.reduce((a, b) => a + b, 0) / values.length;
 
-      case 'count':
+      case "count":
         return values.length;
 
-      case 'min':
+      case "min":
         return Math.min(...values);
 
-      case 'max':
+      case "max":
         return Math.max(...values);
 
-      case 'stddev':
+      case "stddev":
         return this.computeStdDev(values);
 
-      case 'variance':
+      case "variance":
         return this.computeVariance(values);
 
-      case 'first':
+      case "first":
         return values[0];
 
-      case 'last':
+      case "last":
         return values[values.length - 1];
 
       default:
@@ -203,7 +220,7 @@ export class AggregateOperator {
     if (values.length === 0) return 0;
 
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const squaredDiffs = values.map(v => Math.pow(v - mean, 2));
+    const squaredDiffs = values.map((v) => Math.pow(v - mean, 2));
     return squaredDiffs.reduce((a, b) => a + b, 0) / values.length;
   }
 
@@ -213,7 +230,7 @@ export class AggregateOperator {
   static applyGlobal(table: Table, aggregations: AggregationSpec[]): Table {
     const resultColumns: Record<string, any[]> = {};
 
-    aggregations.forEach(agg => {
+    aggregations.forEach((agg) => {
       const column = table.getChild(agg.column);
       if (!column) {
         throw new Error(`Column '${agg.column}' not found`);
@@ -234,4 +251,3 @@ export class AggregateOperator {
     return tableFromArrays(resultColumns);
   }
 }
-

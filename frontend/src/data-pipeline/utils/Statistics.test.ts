@@ -1,6 +1,6 @@
 /**
  * Statistics Tests
- * 
+ *
  * Comprehensive tests for Statistics utilities including:
  * - Basic statistics (min, max, count)
  * - Advanced statistics (mean, median, stddev, quartiles)
@@ -9,13 +9,13 @@
  * - Correlation
  * - Security tests
  * - Performance tests
- * 
+ *
  * @author Toaster (Senior QA Engineer)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { tableFromArrays, Table, vectorFromArray, Vector } from 'apache-arrow';
-import { Statistics, ColumnStats, TableStats } from './Statistics';
+import { describe, it, expect, beforeEach } from "vitest";
+import { tableFromArrays, Table, vectorFromArray, Vector } from "apache-arrow";
+import { Statistics, ColumnStats, TableStats } from "./Statistics";
 
 // ============================================================================
 // TEST HELPERS
@@ -47,9 +47,9 @@ function round(value: number, decimals: number): number {
 // BASIC COLUMN STATISTICS TESTS
 // ============================================================================
 
-describe('Statistics', () => {
-  describe('Basic Column Stats', () => {
-    it('should compute min and max for numeric column', () => {
+describe("Statistics", () => {
+  describe("Basic Column Stats", () => {
+    it("should compute min and max for numeric column", () => {
       const column = createVector([5, 2, 8, 1, 9, 3]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -57,21 +57,21 @@ describe('Statistics', () => {
       expect(stats.max).toBe(9);
     });
 
-    it('should compute null count', () => {
+    it("should compute null count", () => {
       const column = createVector([1, null, 3, null, 5, null]);
       const stats = Statistics.computeColumnStats(column);
 
       expect(stats.nullCount).toBe(3);
     });
 
-    it('should compute distinct count', () => {
+    it("should compute distinct count", () => {
       const column = createVector([1, 2, 2, 3, 3, 3, 4, 4, 4, 4]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBe(4);
     });
 
-    it('should handle all same values', () => {
+    it("should handle all same values", () => {
       const column = createVector([5, 5, 5, 5, 5]);
       const stats = Statistics.computeColumnStats(column, true);
 
@@ -80,7 +80,7 @@ describe('Statistics', () => {
       expect(stats.distinctCount).toBe(1);
     });
 
-    it('should handle single value', () => {
+    it("should handle single value", () => {
       const column = createVector([42]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -89,7 +89,7 @@ describe('Statistics', () => {
       expect(stats.nullCount).toBe(0);
     });
 
-    it('should handle empty column', () => {
+    it("should handle empty column", () => {
       const column = createVector([]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -98,7 +98,7 @@ describe('Statistics', () => {
       expect(stats.nullCount).toBe(0);
     });
 
-    it('should handle all null column', () => {
+    it("should handle all null column", () => {
       const column = createVector([null, null, null]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -112,29 +112,29 @@ describe('Statistics', () => {
   // ADVANCED STATISTICS TESTS
   // ============================================================================
 
-  describe('Advanced Statistics', () => {
-    it('should compute mean', () => {
+  describe("Advanced Statistics", () => {
+    it("should compute mean", () => {
       const column = createVector([1, 2, 3, 4, 5]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.mean).toBe(3);
     });
 
-    it('should compute median for odd count', () => {
+    it("should compute median for odd count", () => {
       const column = createVector([1, 3, 5, 7, 9]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.median).toBe(5);
     });
 
-    it('should compute median for even count', () => {
+    it("should compute median for even count", () => {
       const column = createVector([1, 2, 3, 4]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.median).toBe(2.5);
     });
 
-    it('should compute standard deviation', () => {
+    it("should compute standard deviation", () => {
       const column = createVector([2, 4, 4, 4, 5, 5, 7, 9]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -142,7 +142,7 @@ describe('Statistics', () => {
       expect(round(stats.stddev!, 2)).toBe(2);
     });
 
-    it('should compute quartiles', () => {
+    it("should compute quartiles", () => {
       const column = createVector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -152,7 +152,7 @@ describe('Statistics', () => {
       expect(stats.quartiles![2]).toBeCloseTo(7.75, 1); // Q3
     });
 
-    it('should handle negative numbers in statistics', () => {
+    it("should handle negative numbers in statistics", () => {
       const column = createVector([-10, -5, 0, 5, 10]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -162,7 +162,7 @@ describe('Statistics', () => {
       expect(stats.median).toBe(0);
     });
 
-    it('should handle floating point values', () => {
+    it("should handle floating point values", () => {
       const column = createVector([1.5, 2.5, 3.5, 4.5, 5.5]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -170,8 +170,8 @@ describe('Statistics', () => {
       expect(stats.median).toBe(3.5);
     });
 
-    it('should not compute advanced stats for non-numeric columns', () => {
-      const column = createVector(['a', 'b', 'c']);
+    it("should not compute advanced stats for non-numeric columns", () => {
+      const column = createVector(["a", "b", "c"]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.mean).toBeUndefined();
@@ -184,12 +184,12 @@ describe('Statistics', () => {
   // TABLE STATISTICS TESTS
   // ============================================================================
 
-  describe('Table Statistics', () => {
-    it('should compute stats for all columns', () => {
+  describe("Table Statistics", () => {
+    it("should compute stats for all columns", () => {
       const table = createTestTable({
         id: [1, 2, 3, 4, 5],
         value: [10, 20, 30, 40, 50],
-        name: ['a', 'b', 'c', 'd', 'e'],
+        name: ["a", "b", "c", "d", "e"],
       });
 
       const stats = Statistics.computeTableStats(table);
@@ -199,36 +199,36 @@ describe('Statistics', () => {
       expect(stats.columnStats.size).toBe(3);
     });
 
-    it('should include stats for each column', () => {
+    it("should include stats for each column", () => {
       const table = createTestTable({
         numbers: [1, 2, 3],
-        strings: ['x', 'y', 'z'],
+        strings: ["x", "y", "z"],
       });
 
       const stats = Statistics.computeTableStats(table);
 
-      expect(stats.columnStats.has('numbers')).toBe(true);
-      expect(stats.columnStats.has('strings')).toBe(true);
+      expect(stats.columnStats.has("numbers")).toBe(true);
+      expect(stats.columnStats.has("strings")).toBe(true);
     });
 
-    it('should compute distinct counts when requested', () => {
+    it("should compute distinct counts when requested", () => {
       const table = createTestTable({
         value: [1, 1, 2, 2, 3],
       });
 
       const stats = Statistics.computeTableStats(table, true);
-      const valueStats = stats.columnStats.get('value');
+      const valueStats = stats.columnStats.get("value");
 
       expect(valueStats?.distinctCount).toBe(3);
     });
 
-    it('should compute advanced stats when requested', () => {
+    it("should compute advanced stats when requested", () => {
       const table = createTestTable({
         value: [1, 2, 3, 4, 5],
       });
 
       const stats = Statistics.computeTableStats(table, false, true);
-      const valueStats = stats.columnStats.get('value');
+      const valueStats = stats.columnStats.get("value");
 
       expect(valueStats?.mean).toBe(3);
       expect(valueStats?.median).toBe(3);
@@ -239,8 +239,8 @@ describe('Statistics', () => {
   // HISTOGRAM TESTS
   // ============================================================================
 
-  describe('Histogram', () => {
-    it('should compute histogram with default bins', () => {
+  describe("Histogram", () => {
+    it("should compute histogram with default bins", () => {
       const column = createVector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
       const histogram = Statistics.computeHistogram(column);
 
@@ -248,7 +248,7 @@ describe('Statistics', () => {
       expect(histogram.counts.length).toBe(10);
     });
 
-    it('should compute histogram with custom bins', () => {
+    it("should compute histogram with custom bins", () => {
       const column = createVector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
       const histogram = Statistics.computeHistogram(column, 5);
 
@@ -256,7 +256,7 @@ describe('Statistics', () => {
       expect(histogram.counts.length).toBe(5);
     });
 
-    it('should distribute values correctly', () => {
+    it("should distribute values correctly", () => {
       const column = createVector([1, 1, 1, 5, 5, 5, 9, 9, 9]);
       const histogram = Statistics.computeHistogram(column, 3);
 
@@ -264,15 +264,15 @@ describe('Statistics', () => {
       expect(histogram.counts.reduce((a, b) => a + b, 0)).toBe(9);
     });
 
-    it('should handle single value', () => {
+    it("should handle single value", () => {
       const column = createVector([5, 5, 5, 5, 5]);
       const histogram = Statistics.computeHistogram(column, 5);
 
       // All values in same bin
-      expect(histogram.counts.some(c => c === 5)).toBe(true);
+      expect(histogram.counts.some((c) => c === 5)).toBe(true);
     });
 
-    it('should handle empty column', () => {
+    it("should handle empty column", () => {
       const column = createVector([]);
       const histogram = Statistics.computeHistogram(column);
 
@@ -280,15 +280,15 @@ describe('Statistics', () => {
       expect(histogram.counts.length).toBe(0);
     });
 
-    it('should skip non-numeric values', () => {
-      const column = createVector([1, 'text', 2, null, 3]);
+    it("should skip non-numeric values", () => {
+      const column = createVector([1, "text", 2, null, 3]);
       const histogram = Statistics.computeHistogram(column);
 
       // Should only count numeric values
       expect(histogram.counts.reduce((a, b) => a + b, 0)).toBe(3);
     });
 
-    it('should handle negative values', () => {
+    it("should handle negative values", () => {
       const column = createVector([-10, -5, 0, 5, 10]);
       const histogram = Statistics.computeHistogram(column, 4);
 
@@ -301,9 +301,9 @@ describe('Statistics', () => {
   // VALUE COUNTS TESTS
   // ============================================================================
 
-  describe('Value Counts', () => {
-    it('should count value frequencies', () => {
-      const column = createVector(['a', 'b', 'a', 'c', 'a', 'b']);
+  describe("Value Counts", () => {
+    it("should count value frequencies", () => {
+      const column = createVector(["a", "b", "a", "c", "a", "b"]);
       const counts = Statistics.computeValueCounts(column);
 
       expect(counts.get('"a"')).toBe(3);
@@ -311,8 +311,8 @@ describe('Statistics', () => {
       expect(counts.get('"c"')).toBe(1);
     });
 
-    it('should return top N values', () => {
-      const column = createVector(['a', 'a', 'a', 'b', 'b', 'c']);
+    it("should return top N values", () => {
+      const column = createVector(["a", "a", "a", "b", "b", "c"]);
       const counts = Statistics.computeValueCounts(column, 2);
 
       expect(counts.size).toBe(2);
@@ -320,32 +320,32 @@ describe('Statistics', () => {
       expect(counts.get('"b"')).toBe(2);
     });
 
-    it('should handle numeric values', () => {
+    it("should handle numeric values", () => {
       const column = createVector([1, 2, 1, 3, 1, 2]);
       const counts = Statistics.computeValueCounts(column);
 
-      expect(counts.get('1')).toBe(3);
-      expect(counts.get('2')).toBe(2);
-      expect(counts.get('3')).toBe(1);
+      expect(counts.get("1")).toBe(3);
+      expect(counts.get("2")).toBe(2);
+      expect(counts.get("3")).toBe(1);
     });
 
-    it('should handle null values', () => {
+    it("should handle null values", () => {
       const column = createVector([1, null, 1, null, 1]);
       const counts = Statistics.computeValueCounts(column);
 
-      expect(counts.get('1')).toBe(3);
-      expect(counts.get('null')).toBe(2);
+      expect(counts.get("1")).toBe(3);
+      expect(counts.get("null")).toBe(2);
     });
 
-    it('should handle boolean values', () => {
+    it("should handle boolean values", () => {
       const column = createVector([true, false, true, true, false]);
       const counts = Statistics.computeValueCounts(column);
 
-      expect(counts.get('true')).toBe(3);
-      expect(counts.get('false')).toBe(2);
+      expect(counts.get("true")).toBe(3);
+      expect(counts.get("false")).toBe(2);
     });
 
-    it('should handle empty column', () => {
+    it("should handle empty column", () => {
       const column = createVector([]);
       const counts = Statistics.computeValueCounts(column);
 
@@ -357,8 +357,8 @@ describe('Statistics', () => {
   // CORRELATION TESTS
   // ============================================================================
 
-  describe('Correlation', () => {
-    it('should compute perfect positive correlation', () => {
+  describe("Correlation", () => {
+    it("should compute perfect positive correlation", () => {
       const column1 = createVector([1, 2, 3, 4, 5]);
       const column2 = createVector([2, 4, 6, 8, 10]);
 
@@ -367,7 +367,7 @@ describe('Statistics', () => {
       expect(correlation).toBeCloseTo(1, 5);
     });
 
-    it('should compute perfect negative correlation', () => {
+    it("should compute perfect negative correlation", () => {
       const column1 = createVector([1, 2, 3, 4, 5]);
       const column2 = createVector([10, 8, 6, 4, 2]);
 
@@ -376,7 +376,7 @@ describe('Statistics', () => {
       expect(correlation).toBeCloseTo(-1, 5);
     });
 
-    it('should compute no correlation', () => {
+    it("should compute no correlation", () => {
       const column1 = createVector([1, 2, 3, 4, 5]);
       const column2 = createVector([5, 5, 5, 5, 5]); // Constant
 
@@ -386,7 +386,7 @@ describe('Statistics', () => {
       expect(correlation).toBe(0);
     });
 
-    it('should handle partial correlation', () => {
+    it("should handle partial correlation", () => {
       const column1 = createVector([1, 2, 3, 4, 5]);
       const column2 = createVector([1, 3, 2, 5, 4]);
 
@@ -397,17 +397,17 @@ describe('Statistics', () => {
       expect(correlation).toBeLessThan(1);
     });
 
-    it('should skip non-numeric pairs', () => {
-      const column1 = createVector([1, 'text', 3, null, 5]);
-      const column2 = createVector([2, 4, 'text', 8, 10]);
+    it("should skip non-numeric pairs", () => {
+      const column1 = createVector([1, "text", 3, null, 5]);
+      const column2 = createVector([2, 4, "text", 8, 10]);
 
       const correlation = Statistics.computeCorrelation(column1, column2);
 
       // Should still compute for valid pairs
-      expect(typeof correlation).toBe('number');
+      expect(typeof correlation).toBe("number");
     });
 
-    it('should handle different length columns', () => {
+    it("should handle different length columns", () => {
       const column1 = createVector([1, 2, 3, 4, 5, 6, 7]);
       const column2 = createVector([2, 4, 6]);
 
@@ -417,7 +417,7 @@ describe('Statistics', () => {
       expect(correlation).toBeCloseTo(1, 5);
     });
 
-    it('should return 0 for insufficient data', () => {
+    it("should return 0 for insufficient data", () => {
       const column1 = createVector([1]);
       const column2 = createVector([2]);
 
@@ -426,7 +426,7 @@ describe('Statistics', () => {
       expect(correlation).toBe(0);
     });
 
-    it('should handle empty columns', () => {
+    it("should handle empty columns", () => {
       const column1 = createVector([]);
       const column2 = createVector([]);
 
@@ -440,17 +440,17 @@ describe('Statistics', () => {
   // STRING COLUMN STATISTICS TESTS
   // ============================================================================
 
-  describe('String Column Statistics', () => {
-    it('should compute min/max for strings (lexicographic)', () => {
-      const column = createVector(['banana', 'apple', 'cherry']);
+  describe("String Column Statistics", () => {
+    it("should compute min/max for strings (lexicographic)", () => {
+      const column = createVector(["banana", "apple", "cherry"]);
       const stats = Statistics.computeColumnStats(column);
 
-      expect(stats.min).toBe('apple');
-      expect(stats.max).toBe('cherry');
+      expect(stats.min).toBe("apple");
+      expect(stats.max).toBe("cherry");
     });
 
-    it('should compute distinct count for strings', () => {
-      const column = createVector(['a', 'b', 'a', 'c', 'b', 'a']);
+    it("should compute distinct count for strings", () => {
+      const column = createVector(["a", "b", "a", "c", "b", "a"]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBe(3);
@@ -461,22 +461,22 @@ describe('Statistics', () => {
   // EDGE CASES
   // ============================================================================
 
-  describe('Edge Cases', () => {
-    it('should handle very large numbers', () => {
+  describe("Edge Cases", () => {
+    it("should handle very large numbers", () => {
       const column = createVector([Number.MAX_SAFE_INTEGER, 1, 2]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.max).toBe(Number.MAX_SAFE_INTEGER);
     });
 
-    it('should handle very small numbers', () => {
+    it("should handle very small numbers", () => {
       const column = createVector([Number.MIN_SAFE_INTEGER, 1, 2]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.min).toBe(Number.MIN_SAFE_INTEGER);
     });
 
-    it('should handle Infinity values', () => {
+    it("should handle Infinity values", () => {
       const column = createVector([Infinity, 1, 2, -Infinity]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -484,7 +484,7 @@ describe('Statistics', () => {
       expect(stats.max).toBe(Infinity);
     });
 
-    it('should handle NaN values', () => {
+    it("should handle NaN values", () => {
       const column = createVector([1, NaN, 3]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -492,14 +492,14 @@ describe('Statistics', () => {
       expect(stats).toBeDefined();
     });
 
-    it('should handle mixed types', () => {
-      const column = createVector([1, 'text', true, null, { obj: 1 }]);
+    it("should handle mixed types", () => {
+      const column = createVector([1, "text", true, null, { obj: 1 }]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBeGreaterThan(0);
     });
 
-    it('should handle undefined values', () => {
+    it("should handle undefined values", () => {
       const column = createVector([1, undefined, 3]);
       const stats = Statistics.computeColumnStats(column);
 
@@ -511,33 +511,33 @@ describe('Statistics', () => {
   // SECURITY TESTS
   // ============================================================================
 
-  describe('Security Tests', () => {
-    it('should handle SQL injection in string values', () => {
-      const column = createVector(["'; DROP TABLE users; --", 'normal']);
+  describe("Security Tests", () => {
+    it("should handle SQL injection in string values", () => {
+      const column = createVector(["'; DROP TABLE users; --", "normal"]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBe(2);
     });
 
-    it('should handle XSS in string values', () => {
-      const column = createVector(['<script>alert("xss")</script>', 'normal']);
+    it("should handle XSS in string values", () => {
+      const column = createVector(['<script>alert("xss")</script>', "normal"]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBe(2);
     });
 
-    it('should handle prototype pollution attempts', () => {
+    it("should handle prototype pollution attempts", () => {
       const originalProto = Object.prototype.toString;
 
-      const column = createVector(['__proto__', 'constructor', 'normal']);
+      const column = createVector(["__proto__", "constructor", "normal"]);
       Statistics.computeColumnStats(column, true);
 
       expect(Object.prototype.toString).toBe(originalProto);
     });
 
-    it('should handle very long strings', () => {
-      const longString = 'x'.repeat(100000);
-      const column = createVector([longString, 'short']);
+    it("should handle very long strings", () => {
+      const longString = "x".repeat(100000);
+      const column = createVector([longString, "short"]);
       const stats = Statistics.computeColumnStats(column, true);
 
       expect(stats.distinctCount).toBe(2);
@@ -548,8 +548,8 @@ describe('Statistics', () => {
   // PERFORMANCE TESTS
   // ============================================================================
 
-  describe('Performance Tests', () => {
-    it('should compute basic stats on 100,000 values in < 100ms', () => {
+  describe("Performance Tests", () => {
+    it("should compute basic stats on 100,000 values in < 100ms", () => {
       const data = Array.from({ length: 100000 }, () => Math.random() * 1000);
       const column = createVector(data);
 
@@ -562,7 +562,7 @@ describe('Statistics', () => {
       expect(duration).toBeLessThan(100);
     });
 
-    it('should compute distinct count on 100,000 values in < 500ms', () => {
+    it("should compute distinct count on 100,000 values in < 500ms", () => {
       const data = Array.from({ length: 100000 }, (_, i) => i % 1000);
       const column = createVector(data);
 
@@ -574,7 +574,7 @@ describe('Statistics', () => {
       expect(duration).toBeLessThan(500);
     });
 
-    it('should compute advanced stats on 100,000 values in < 500ms', () => {
+    it("should compute advanced stats on 100,000 values in < 500ms", () => {
       const data = Array.from({ length: 100000 }, () => Math.random() * 1000);
       const column = createVector(data);
 
@@ -588,7 +588,7 @@ describe('Statistics', () => {
       expect(duration).toBeLessThan(500);
     });
 
-    it('should compute histogram on 100,000 values in < 200ms', () => {
+    it("should compute histogram on 100,000 values in < 200ms", () => {
       const data = Array.from({ length: 100000 }, () => Math.random() * 1000);
       const column = createVector(data);
 
@@ -600,7 +600,7 @@ describe('Statistics', () => {
       expect(duration).toBeLessThan(200);
     });
 
-    it('should compute table stats efficiently', () => {
+    it("should compute table stats efficiently", () => {
       const table = createTestTable({
         col1: Array.from({ length: 50000 }, () => Math.random()),
         col2: Array.from({ length: 50000 }, () => Math.random()),
@@ -615,7 +615,7 @@ describe('Statistics', () => {
       expect(duration).toBeLessThan(1000);
     });
 
-    it('should compute correlation efficiently', () => {
+    it("should compute correlation efficiently", () => {
       const data1 = Array.from({ length: 100000 }, () => Math.random() * 1000);
       const data2 = Array.from({ length: 100000 }, () => Math.random() * 1000);
       const column1 = createVector(data1);
@@ -635,15 +635,15 @@ describe('Statistics', () => {
   // ACCURACY TESTS
   // ============================================================================
 
-  describe('Accuracy Tests', () => {
-    it('should compute accurate mean for known dataset', () => {
+  describe("Accuracy Tests", () => {
+    it("should compute accurate mean for known dataset", () => {
       const column = createVector([10, 20, 30, 40, 50]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
       expect(stats.mean).toBe(30);
     });
 
-    it('should compute accurate stddev for known dataset', () => {
+    it("should compute accurate stddev for known dataset", () => {
       // Dataset with known stddev
       const column = createVector([10, 20, 30, 40, 50]);
       const stats = Statistics.computeColumnStats(column, false, true);
@@ -652,7 +652,7 @@ describe('Statistics', () => {
       expect(round(stats.stddev!, 2)).toBeCloseTo(14.14, 1);
     });
 
-    it('should compute accurate quartiles for known dataset', () => {
+    it("should compute accurate quartiles for known dataset", () => {
       const column = createVector([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
       const stats = Statistics.computeColumnStats(column, false, true);
 
@@ -660,4 +660,3 @@ describe('Statistics', () => {
     });
   });
 });
-

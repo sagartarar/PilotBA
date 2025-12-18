@@ -19,4 +19,5 @@ export {
   type LayoutItem,
   type DashboardLayout,
 } from './layoutStore';
+export { useLogStore } from './logStore';
 

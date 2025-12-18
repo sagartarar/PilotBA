@@ -1,18 +1,18 @@
 /**
  * Join operator for table joins.
- * 
+ *
  * Implements various types of SQL-like joins between Arrow Tables.
  */
 
-import { Table, Vector, tableFromArrays, Schema, Field } from 'apache-arrow';
+import { Table, Vector, tableFromArrays, Schema, Field } from "apache-arrow";
 
-export type JoinType = 'inner' | 'left' | 'right' | 'full' | 'cross';
+export type JoinType = "inner" | "left" | "right" | "full" | "cross";
 
 export interface JoinParams {
   type: JoinType;
-  leftOn: string;    // Left table join column
-  rightOn: string;   // Right table join column
-  suffix?: string;   // Suffix for duplicate column names (default: '_right')
+  leftOn: string; // Left table join column
+  rightOn: string; // Right table join column
+  suffix?: string; // Suffix for duplicate column names (default: '_right')
 }
 
 /**
@@ -21,31 +21,55 @@ export interface JoinParams {
 export class JoinOperator {
   /**
    * Joins two tables.
-   * 
+   *
    * @param left - Left table
    * @param right - Right table
    * @param params - Join parameters
    * @returns Joined table
    */
   static apply(left: Table, right: Table, params: JoinParams): Table {
-    const suffix = params.suffix || '_right';
+    const suffix = params.suffix || "_right";
 
     switch (params.type) {
-      case 'inner':
-        return this.innerJoin(left, right, params.leftOn, params.rightOn, suffix);
-      
-      case 'left':
-        return this.leftJoin(left, right, params.leftOn, params.rightOn, suffix);
-      
-      case 'right':
-        return this.rightJoin(left, right, params.leftOn, params.rightOn, suffix);
-      
-      case 'full':
-        return this.fullJoin(left, right, params.leftOn, params.rightOn, suffix);
-      
-      case 'cross':
+      case "inner":
+        return this.innerJoin(
+          left,
+          right,
+          params.leftOn,
+          params.rightOn,
+          suffix
+        );
+
+      case "left":
+        return this.leftJoin(
+          left,
+          right,
+          params.leftOn,
+          params.rightOn,
+          suffix
+        );
+
+      case "right":
+        return this.rightJoin(
+          left,
+          right,
+          params.leftOn,
+          params.rightOn,
+          suffix
+        );
+
+      case "full":
+        return this.fullJoin(
+          left,
+          right,
+          params.leftOn,
+          params.rightOn,
+          suffix
+        );
+
+      case "cross":
         return this.crossJoin(left, right, suffix);
-      
+
       default:
         throw new Error(`Unknown join type: ${params.type}`);
     }
@@ -85,7 +109,7 @@ export class JoinOperator {
       if (rightIndices) {
         for (const j of rightIndices) {
           // Add left row
-          this.addRow(left, i, resultColumns, '');
+          this.addRow(left, i, resultColumns, "");
           // Add right row
           this.addRow(right, j, resultColumns, suffix);
         }
@@ -122,12 +146,12 @@ export class JoinOperator {
 
       if (rightIndices && rightIndices.length > 0) {
         for (const j of rightIndices) {
-          this.addRow(left, i, resultColumns, '');
+          this.addRow(left, i, resultColumns, "");
           this.addRow(right, j, resultColumns, suffix);
         }
       } else {
         // No match, add left row with nulls for right columns
-        this.addRow(left, i, resultColumns, '');
+        this.addRow(left, i, resultColumns, "");
         this.addNullRow(right, resultColumns, suffix);
       }
     }
@@ -146,7 +170,7 @@ export class JoinOperator {
     suffix: string
   ): Table {
     // Right join is equivalent to left join with tables swapped
-    const result = this.leftJoin(right, left, rightOn, leftOn, '_left');
+    const result = this.leftJoin(right, left, rightOn, leftOn, "_left");
 
     // Reorder columns to match expected output
     return result;
@@ -182,12 +206,12 @@ export class JoinOperator {
 
       if (rightIndices && rightIndices.length > 0) {
         for (const j of rightIndices) {
-          this.addRow(left, i, resultColumns, '');
+          this.addRow(left, i, resultColumns, "");
           this.addRow(right, j, resultColumns, suffix);
           matchedRightRows.add(j);
         }
       } else {
-        this.addRow(left, i, resultColumns, '');
+        this.addRow(left, i, resultColumns, "");
         this.addNullRow(right, resultColumns, suffix);
       }
     }
@@ -195,7 +219,7 @@ export class JoinOperator {
     // Add unmatched right rows
     for (let j = 0; j < right.numRows; j++) {
       if (!matchedRightRows.has(j)) {
-        this.addNullRow(left, resultColumns, '');
+        this.addNullRow(left, resultColumns, "");
         this.addRow(right, j, resultColumns, suffix);
       }
     }
@@ -212,7 +236,7 @@ export class JoinOperator {
 
     for (let i = 0; i < left.numRows; i++) {
       for (let j = 0; j < right.numRows; j++) {
-        this.addRow(left, i, resultColumns, '');
+        this.addRow(left, i, resultColumns, "");
         this.addRow(right, j, resultColumns, suffix);
       }
     }
@@ -223,7 +247,10 @@ export class JoinOperator {
   /**
    * Builds index (hash map) for join column.
    */
-  private static buildIndex(table: Table, column: string): Map<string, number[]> {
+  private static buildIndex(
+    table: Table,
+    column: string
+  ): Map<string, number[]> {
     const index = new Map<string, number[]>();
     const col = table.getChild(column);
 
@@ -248,9 +275,9 @@ export class JoinOperator {
    */
   private static serializeKey(value: any): string {
     if (value === null || value === undefined) {
-      return '__NULL__';
+      return "__NULL__";
     }
-    if (typeof value === 'object') {
+    if (typeof value === "object") {
       return JSON.stringify(value);
     }
     return String(value);
@@ -266,12 +293,12 @@ export class JoinOperator {
     resultColumns: Record<string, any[]>
   ): void {
     // Add left columns
-    left.schema.fields.forEach(field => {
+    left.schema.fields.forEach((field) => {
       resultColumns[field.name] = [];
     });
 
     // Add right columns with suffix for duplicates
-    right.schema.fields.forEach(field => {
+    right.schema.fields.forEach((field) => {
       const colName = left.getChild(field.name)
         ? `${field.name}${suffix}`
         : field.name;
@@ -288,13 +315,14 @@ export class JoinOperator {
     resultColumns: Record<string, any[]>,
     suffix: string
   ): void {
-    table.schema.fields.forEach(field => {
+    table.schema.fields.forEach((field) => {
       const col = table.getChild(field.name)!;
       const value = col.get(rowIndex);
 
-      const colName = suffix && resultColumns[`${field.name}${suffix}`]
-        ? `${field.name}${suffix}`
-        : field.name;
+      const colName =
+        suffix && resultColumns[`${field.name}${suffix}`]
+          ? `${field.name}${suffix}`
+          : field.name;
 
       resultColumns[colName].push(value);
     });
@@ -308,13 +336,13 @@ export class JoinOperator {
     resultColumns: Record<string, any[]>,
     suffix: string
   ): void {
-    table.schema.fields.forEach(field => {
-      const colName = suffix && resultColumns[`${field.name}${suffix}`]
-        ? `${field.name}${suffix}`
-        : field.name;
+    table.schema.fields.forEach((field) => {
+      const colName =
+        suffix && resultColumns[`${field.name}${suffix}`]
+          ? `${field.name}${suffix}`
+          : field.name;
 
       resultColumns[colName].push(null);
     });
   }
 }
-

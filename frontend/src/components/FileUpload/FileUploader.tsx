@@ -3,6 +3,8 @@ import { clsx } from 'clsx';
 import { useDataStore, useUIStore } from '../../store';
 import { Button } from '../common/Button';
 import { LoadingSpinner } from '../common/LoadingSpinner';
+import { sanitizeFileName, isValidFileExtension, detectFileType } from '../../utils/sanitize';
+import { errorService, validateFile as validateFileHandler } from '../../services';
 
 export interface FileUploaderProps {
   onUploadComplete?: (datasetId: string) => void;
@@ -25,17 +27,46 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const validateFile = useCallback((file: File): string | null => {
-    const extension = file.name.toLowerCase().split('.').pop();
-    const validExtensions = accept.split(',').map(ext => ext.replace('.', '').toLowerCase());
-    
-    if (!extension || !validExtensions.includes(extension)) {
+  const validateFile = useCallback(async (file: File): Promise<string | null> => {
+    // Sanitize filename first
+    const safeName = sanitizeFileName(file.name);
+    if (safeName !== file.name) {
+      errorService.warn('File name was sanitized for security', {
+        original: file.name,
+        sanitized: safeName,
+      });
+    }
+
+    // Check extension
+    const validExtensions = accept.split(',').map(ext => ext.toLowerCase());
+    if (!isValidFileExtension(safeName, validExtensions)) {
       return `Invalid file type. Please upload ${accept} files.`;
     }
     
+    // Check file size
     if (file.size > maxSize) {
       const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(0);
       return `File too large. Maximum size is ${maxSizeMB}MB.`;
+    }
+
+    // Validate file content type via magic bytes
+    const detectedType = await detectFileType(file);
+    const ext = safeName.toLowerCase().slice(safeName.lastIndexOf('.'));
+    
+    // Cross-check extension with detected type
+    const typeExtensionMap: Record<string, string[]> = {
+      'text/csv': ['.csv'],
+      'application/json': ['.json'],
+      'application/x-parquet': ['.parquet'],
+      'application/vnd.apache.arrow.file': ['.arrow'],
+    };
+
+    if (detectedType && typeExtensionMap[detectedType] && !typeExtensionMap[detectedType].includes(ext)) {
+      errorService.warn('File extension may not match content type', {
+        fileName: safeName,
+        extension: ext,
+        detectedType,
+      });
     }
     
     return null;
@@ -44,7 +75,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const handleFile = useCallback(async (file: File) => {
     clearError();
     
-    const validationError = validateFile(file);
+    // Async validation with security checks
+    const validationError = await validateFile(file);
     if (validationError) {
       addNotification({
         type: 'error',
@@ -54,15 +86,19 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       return;
     }
 
+    // Use sanitized filename for display
+    const safeName = sanitizeFileName(file.name);
+
     try {
       const datasetId = await uploadFile(file);
       addNotification({
         type: 'success',
         title: 'Upload Complete',
-        message: `Successfully loaded ${file.name}`,
+        message: `Successfully loaded ${safeName}`,
       });
       onUploadComplete?.(datasetId);
     } catch (err) {
+      // Error is already captured by ErrorService
       addNotification({
         type: 'error',
         title: 'Upload Failed',

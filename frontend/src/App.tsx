@@ -4,6 +4,7 @@ import { AppLayout } from './components/Layout';
 import { PerformanceMonitor } from './components/Debug';
 import { ErrorBoundary, LoadingSpinner } from './components/common';
 import { useUIStore } from './store';
+import { useErrorToast } from './hooks';
 
 // Lazy load heavy components for code splitting
 const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'));
@@ -83,14 +84,22 @@ const ThemeSettings: React.FC = () => {
   );
 };
 
+// Component to initialize error toast subscription
+const ErrorToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  useErrorToast();
+  return <>{children}</>;
+};
+
 function App() {
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <AppLayout>
-          <ViewRouter />
-        </AppLayout>
-        <PerformanceMonitor />
+        <ErrorToastProvider>
+          <AppLayout>
+            <ViewRouter />
+          </AppLayout>
+          <PerformanceMonitor />
+        </ErrorToastProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
