@@ -217,8 +217,8 @@ export class Quadtree {
         this.southeast.insert(point);
     }
 
-    // Keep points in this node for query optimization
-    // (some implementations clear here, but keeping them avoids edge cases)
+    // Clear points from this node after redistribution to avoid duplicates
+    this.points = [];
   }
 
   /**
