@@ -1,11 +1,18 @@
-use actix_web::{web, App, HttpServer, HttpResponse, middleware};
+//! PilotBA Backend Server
+//!
+//! A high-performance data visualization backend built with Actix-web.
+
+use actix_web::{web, App, HttpServer, middleware as actix_middleware};
 use actix_cors::Cors;
 use std::io;
 
-mod services;
-mod models;
-mod utils;
 mod connectors;
+mod errors;
+mod middleware;
+mod models;
+mod routes;
+mod services;
+mod utils;
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -15,47 +22,55 @@ async fn main() -> io::Result<()> {
     // Load environment variables
     dotenv::dotenv().ok();
     
-    log::info!("Starting PilotBA Backend Server...");
+    log::info!("Starting PilotBA Backend Server v{}...", env!("CARGO_PKG_VERSION"));
     
+    // Get configuration from environment
     let bind_address = std::env::var("BIND_ADDRESS")
         .unwrap_or_else(|_| "0.0.0.0:8080".to_string());
     
+    let jwt_secret = std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| {
+            log::warn!("JWT_SECRET not set, using development default. DO NOT USE IN PRODUCTION!");
+            "development-secret-change-in-production".to_string()
+        });
+
+    // Create upload directory
+    let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "./uploads".to_string());
+    std::fs::create_dir_all(&upload_dir).ok();
+    log::info!("Upload directory: {}", upload_dir);
+    
     log::info!("Server binding to: {}", bind_address);
     
-    HttpServer::new(|| {
+    HttpServer::new(move || {
+        // Configure CORS
         let cors = Cors::default()
-            .allow_any_origin()
+            .allow_any_origin() // TODO: Configure for production
             .allow_any_method()
             .allow_any_header()
+            .expose_headers(vec!["Content-Disposition"])
             .max_age(3600);
         
         App::new()
-            .wrap(middleware::Logger::default())
+            // Middleware
+            .wrap(actix_middleware::Logger::default())
+            .wrap(actix_middleware::Compress::default())
             .wrap(cors)
+            // Public API routes
             .service(
                 web::scope("/api")
-                    .route("/health", web::get().to(health_check))
-                    .route("/status", web::get().to(status))
+                    // Health check (public)
+                    .configure(routes::health::config)
+                    // Auth routes (public login, protected others)
+                    .configure(routes::auth::config)
+                    // Protected routes
+                    .service(
+                        web::scope("")
+                            .wrap(middleware::AuthMiddleware)
+                            .configure(routes::files::config)
+                    )
             )
     })
     .bind(&bind_address)?
     .run()
     .await
 }
-
-async fn health_check() -> HttpResponse {
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "healthy",
-        "service": "pilotba-backend"
-    }))
-}
-
-async fn status() -> HttpResponse {
-    HttpResponse::Ok().json(serde_json::json!({
-        "status": "running",
-        "version": env!("CARGO_PKG_VERSION"),
-        "service": "pilotba-backend"
-    }))
-}
-
-

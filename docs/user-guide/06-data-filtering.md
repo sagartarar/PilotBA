@@ -22,6 +22,7 @@ Filtering is one of the most powerful tools in data analysis. It lets you focus 
 Filtering means keeping only the rows that match certain conditions. Think of it like a sieve that lets through only what you want.
 
 **Example**: From 10,000 sales records, show only:
+
 - Sales from the "North" region
 - Where revenue is greater than $1,000
 - From the last quarter
@@ -68,11 +69,11 @@ Each filter has three parts:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-| Part | What to Choose |
-|------|----------------|
-| **Column** | Which field to filter on |
+| Part         | What to Choose                              |
+| ------------ | ------------------------------------------- |
+| **Column**   | Which field to filter on                    |
 | **Operator** | How to compare (equals, greater than, etc.) |
-| **Value** | What to compare against |
+| **Value**    | What to compare against                     |
 
 ### Step 3: Run the Query
 
@@ -86,31 +87,31 @@ PilotBA offers many operators for different situations:
 
 ### Comparison Operators
 
-| Operator | Symbol | Meaning | Example |
-|----------|--------|---------|---------|
-| **Equals** | `=` | Exactly matches | `region = "North"` |
-| **Not Equals** | `≠` | Does not match | `status ≠ "Cancelled"` |
-| **Greater Than** | `>` | Larger than | `revenue > 1000` |
-| **Greater or Equal** | `≥` | Larger or same | `quantity >= 10` |
-| **Less Than** | `<` | Smaller than | `price < 50` |
-| **Less or Equal** | `≤` | Smaller or same | `age <= 65` |
+| Operator             | Symbol | Meaning         | Example                |
+| -------------------- | ------ | --------------- | ---------------------- |
+| **Equals**           | `=`    | Exactly matches | `region = "North"`     |
+| **Not Equals**       | `≠`    | Does not match  | `status ≠ "Cancelled"` |
+| **Greater Than**     | `>`    | Larger than     | `revenue > 1000`       |
+| **Greater or Equal** | `≥`    | Larger or same  | `quantity >= 10`       |
+| **Less Than**        | `<`    | Smaller than    | `price < 50`           |
+| **Less or Equal**    | `≤`    | Smaller or same | `age <= 65`            |
 
 ### Text Operators
 
-| Operator | Meaning | Example |
-|----------|---------|---------|
-| **Contains** | Text includes substring | `name contains "Smith"` |
-| **Starts With** | Text begins with | `product starts with "Widget"` |
-| **Ends With** | Text ends with | `email ends with "@company.com"` |
+| Operator        | Meaning                 | Example                          |
+| --------------- | ----------------------- | -------------------------------- |
+| **Contains**    | Text includes substring | `name contains "Smith"`          |
+| **Starts With** | Text begins with        | `product starts with "Widget"`   |
+| **Ends With**   | Text ends with          | `email ends with "@company.com"` |
 
 ### Special Operators
 
-| Operator | Meaning | Example |
-|----------|---------|---------|
-| **Is Null** | Value is missing/empty | `discount is null` |
-| **Is Not Null** | Value exists | `email is not null` |
-| **In** | Matches any in a list | `region in "North, South, East"` |
-| **Between** | Within a range (inclusive) | `price between 10 and 50` |
+| Operator        | Meaning                    | Example                          |
+| --------------- | -------------------------- | -------------------------------- |
+| **Is Null**     | Value is missing/empty     | `discount is null`               |
+| **Is Not Null** | Value exists               | `email is not null`              |
+| **In**          | Matches any in a list      | `region in "North, South, East"` |
+| **Between**     | Within a range (inclusive) | `price between 10 and 50`        |
 
 ---
 
@@ -124,12 +125,12 @@ Different column types work best with different operators.
 
 **Examples**:
 
-| Scenario | Column | Operator | Value |
-|----------|--------|----------|-------|
-| High-value sales | `revenue` | `>` | `5000` |
-| Exact quantity | `quantity` | `=` | `100` |
-| Price range | `price` | `between` | `10` and `50` |
-| Non-zero values | `discount` | `≠` | `0` |
+| Scenario         | Column     | Operator  | Value         |
+| ---------------- | ---------- | --------- | ------------- |
+| High-value sales | `revenue`  | `>`       | `5000`        |
+| Exact quantity   | `quantity` | `=`       | `100`         |
+| Price range      | `price`    | `between` | `10` and `50` |
+| Non-zero values  | `discount` | `≠`       | `0`           |
 
 ### Filtering Text
 
@@ -137,12 +138,12 @@ Different column types work best with different operators.
 
 **Examples**:
 
-| Scenario | Column | Operator | Value |
-|----------|--------|----------|-------|
-| Specific region | `region` | `=` | `North` |
-| Product search | `product_name` | `contains` | `Widget` |
-| Multiple categories | `category` | `in` | `Electronics, Accessories` |
-| Exclude status | `status` | `≠` | `Cancelled` |
+| Scenario            | Column         | Operator   | Value                      |
+| ------------------- | -------------- | ---------- | -------------------------- |
+| Specific region     | `region`       | `=`        | `North`                    |
+| Product search      | `product_name` | `contains` | `Widget`                   |
+| Multiple categories | `category`     | `in`       | `Electronics, Accessories` |
+| Exclude status      | `status`       | `≠`        | `Cancelled`                |
 
 ### Filtering Dates
 
@@ -150,11 +151,11 @@ Different column types work best with different operators.
 
 **Examples**:
 
-| Scenario | Column | Operator | Value |
-|----------|--------|----------|-------|
-| After a date | `order_date` | `>` | `2025-01-01` |
-| Date range | `created_at` | `between` | `2025-01-01` and `2025-03-31` |
-| Specific date | `ship_date` | `=` | `2025-06-15` |
+| Scenario      | Column       | Operator  | Value                         |
+| ------------- | ------------ | --------- | ----------------------------- |
+| After a date  | `order_date` | `>`       | `2025-01-01`                  |
+| Date range    | `created_at` | `between` | `2025-01-01` and `2025-03-31` |
+| Specific date | `ship_date`  | `=`       | `2025-06-15`                  |
 
 > 💡 **Tip**: Use the format `YYYY-MM-DD` for dates (e.g., `2025-01-15`)
 
@@ -167,11 +168,13 @@ Real analysis often requires multiple conditions. PilotBA applies all enabled fi
 ### Example: Finding High-Value North Region Sales
 
 **Filter 1**:
+
 - Column: `region`
 - Operator: `equals`
 - Value: `North`
 
 **Filter 2**:
+
 - Column: `revenue`
 - Operator: `greater than`
 - Value: `5000`
@@ -194,12 +197,12 @@ Real analysis often requires multiple conditions. PilotBA applies all enabled fi
 
 ### Managing Multiple Filters
 
-| Action | How |
-|--------|-----|
-| **Add filter** | Click "+ Add Filter" |
-| **Remove filter** | Click the trash icon (🗑️) |
+| Action                  | How                            |
+| ----------------------- | ------------------------------ |
+| **Add filter**          | Click "+ Add Filter"           |
+| **Remove filter**       | Click the trash icon (🗑️)      |
 | **Disable temporarily** | Uncheck the "Enabled" checkbox |
-| **Re-enable** | Check the "Enabled" checkbox |
+| **Re-enable**           | Check the "Enabled" checkbox   |
 
 > 💡 **Tip**: Disable filters instead of deleting them if you might need them again.
 
@@ -214,6 +217,7 @@ Let's work through common business scenarios:
 **Goal**: Find customers who have spent more than $10,000
 
 **Setup**:
+
 - Column: `total_purchases`
 - Operator: `greater than`
 - Value: `10000`
@@ -227,6 +231,7 @@ Let's work through common business scenarios:
 **Goal**: Analyze sales from East and West regions only
 
 **Setup**:
+
 - Column: `region`
 - Operator: `in`
 - Value: `East, West`
@@ -240,6 +245,7 @@ Let's work through common business scenarios:
 **Goal**: Find records with missing email addresses
 
 **Setup**:
+
 - Column: `email`
 - Operator: `is null`
 - Value: (none needed)
@@ -253,6 +259,7 @@ Let's work through common business scenarios:
 **Goal**: Get all orders from Q1 2025
 
 **Setup**:
+
 - Column: `order_date`
 - Operator: `between`
 - Value 1: `2025-01-01`
@@ -267,6 +274,7 @@ Let's work through common business scenarios:
 **Goal**: Find all products with "Pro" in the name
 
 **Setup**:
+
 - Column: `product_name`
 - Operator: `contains`
 - Value: `Pro`
@@ -282,6 +290,7 @@ Let's work through common business scenarios:
 **Goal**: Show all orders except cancelled ones
 
 **Setup**:
+
 - Column: `status`
 - Operator: `not equals`
 - Value: `Cancelled`
@@ -296,12 +305,12 @@ Let's work through common business scenarios:
 
 **Filters**:
 
-| # | Column | Operator | Value |
-|---|--------|----------|-------|
-| 1 | `category` | `equals` | `Electronics` |
-| 2 | `revenue` | `greater than` | `1000` |
-| 3 | `region` | `equals` | `North` |
-| 4 | `order_date` | `between` | `2025-10-01` and `2025-12-31` |
+| #   | Column       | Operator       | Value                         |
+| --- | ------------ | -------------- | ----------------------------- |
+| 1   | `category`   | `equals`       | `Electronics`                 |
+| 2   | `revenue`    | `greater than` | `1000`                        |
+| 3   | `region`     | `equals`       | `North`                       |
+| 4   | `order_date` | `between`      | `2025-10-01` and `2025-12-31` |
 
 **Use case**: Targeted performance analysis.
 
@@ -322,6 +331,7 @@ The `in` operator is powerful for matching multiple values at once.
 **Goal**: Show sales from North, South, and East regions (exclude West)
 
 **Setup**:
+
 - Column: `region`
 - Operator: `in`
 - Value: `North, South, East`
@@ -351,6 +361,7 @@ The `between` operator finds values within a range (inclusive of both ends).
 **Goal**: Find products priced between $25 and $75
 
 **Setup**:
+
 - Column: `price`
 - Operator: `between`
 - Min Value: `25`
@@ -409,11 +420,13 @@ The filtered data displays in a table below, showing only matching rows.
 ### "My filter returns no results"
 
 **Possible causes**:
+
 - Value doesn't exist in data (check spelling, case)
 - Filters are too restrictive together
 - Wrong operator for the data type
 
 **Solutions**:
+
 - Preview data to verify values exist
 - Disable filters one by one to find the issue
 - Check for case sensitivity
@@ -421,11 +434,13 @@ The filtered data displays in a table below, showing only matching rows.
 ### "Filter doesn't seem to work"
 
 **Possible causes**:
+
 - Filter is disabled (unchecked)
 - Wrong column selected
 - Data type mismatch
 
 **Solutions**:
+
 - Ensure "Enabled" is checked
 - Verify column selection
 - Check column type matches operator
@@ -433,10 +448,12 @@ The filtered data displays in a table below, showing only matching rows.
 ### "Too many results"
 
 **Possible causes**:
+
 - Filter is too broad
 - Need additional filters
 
 **Solutions**:
+
 - Add more specific conditions
 - Use "and" logic with multiple filters
 - Narrow the value range
@@ -488,11 +505,11 @@ The filtered data displays in a table below, showing only matching rows.
 
 Now that you can filter data, learn to summarize it:
 
-| Want to... | Read this guide |
-|------------|-----------------|
+| Want to...                    | Read this guide                                        |
+| ----------------------------- | ------------------------------------------------------ |
 | Calculate totals and averages | [Aggregation & Grouping](./07-aggregation-grouping.md) |
-| Sort your results | [Query Builder Tutorial](./08-query-builder.md) |
-| Visualize filtered data | [Creating Your First Chart](./04-creating-charts.md) |
+| Sort your results             | [Query Builder Tutorial](./08-query-builder.md)        |
+| Visualize filtered data       | [Creating Your First Chart](./04-creating-charts.md)   |
 
 ---
 
@@ -500,5 +517,4 @@ Now that you can filter data, learn to summarize it:
 
 ---
 
-*Need help? Check the [FAQ](./11-faq-troubleshooting.md) or [Glossary](./12-glossary.md)*
-
+_Need help? Check the [FAQ](./11-faq-troubleshooting.md) or [Glossary](./12-glossary.md)_

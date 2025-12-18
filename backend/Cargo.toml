@@ -36,12 +36,13 @@ argon2 = "0.5"
 
 # Utilities
 uuid = { version = "1.6", features = ["serde", "v4"] }
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "=0.4.38", features = ["serde"] }
 dotenv = "0.15"
 env_logger = "0.11"
 log = "0.4"
 thiserror = "1.0"
 anyhow = "1.0"
+futures-util = "0.3"
 
 # Arrow for columnar data
 arrow = "50.0"
