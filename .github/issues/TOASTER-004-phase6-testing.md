@@ -15,35 +15,31 @@ After Handyman completes the Phase 6 fixes, verify all changes work correctly an
 
 ## ✅ Task Checklist
 
-### 1. Fix NODE_OPTIONS Test Runner Issue (CRITICAL)
+### 1. Verify Test Runner Works (After TOASTER-005) ✅
 
-**Problem:** Tests fail with error:
-```
-Error: Initiated Worker with invalid NODE_OPTIONS env variable: --openssl-config= is not allowed in NODE_OPTIONS
-```
+**Prerequisite:** TOASTER-005 must be completed first.
 
-**Investigation Steps:**
-1. Check `.env` files for NODE_OPTIONS
-2. Check `package.json` scripts
-3. Check `vitest.config.ts` for worker config
-4. Try running with `unset NODE_OPTIONS && npm test`
+**Status:** ✅ COMPLETED (December 18, 2025)
 
-**Potential Fix:**
+The NODE_OPTIONS fix has been applied in `vitest.config.ts` using fork pool:
 ```typescript
-// vitest.config.ts
-export default defineConfig({
-  test: {
-    // Disable workers if NODE_OPTIONS is problematic
-    pool: 'forks', // or 'vmForks' instead of 'threads'
-    // OR
-    poolOptions: {
-      threads: {
-        singleThread: true,
-      },
-    },
+pool: 'forks',
+poolOptions: {
+  forks: {
+    singleFork: true,
   },
-});
+},
 ```
+
+**Verification:**
+```bash
+cd frontend
+unset NODE_OPTIONS && npm test
+```
+
+**Result:** All tests run without NODE_OPTIONS errors.
+
+> **Note:** The NODE_OPTIONS fix is tracked in TOASTER-005. See `docs/TOASTER_FINAL_QA_REPORT_2025-12-18.md` for details.
 
 ---
 

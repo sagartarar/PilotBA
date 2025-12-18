@@ -10,12 +10,12 @@
 
 Complete these tasks in order:
 
-| # | Issue | Priority | Time | Description |
-|---|-------|----------|------|-------------|
-| 1 | **CLEANUP-001** | P1 | 15 min | Deduplicate test runner issues |
-| 2 | **TOASTER-005** | P0 | 30 min | Fix NODE_OPTIONS test runner error |
-| 3 | **TOASTER-006** | P1 | 2 hrs | Performance benchmarks |
-| 4 | **TOASTER-007** | P2 | 2 hrs | E2E tests for critical paths |
+| #   | Issue           | Priority | Time   | Description                        |
+| --- | --------------- | -------- | ------ | ---------------------------------- |
+| 1   | **CLEANUP-001** | P1       | 15 min | Deduplicate test runner issues     |
+| 2   | **TOASTER-005** | P0       | 30 min | Fix NODE_OPTIONS test runner error |
+| 3   | **TOASTER-006** | P1       | 2 hrs  | Performance benchmarks             |
+| 4   | **TOASTER-007** | P2       | 2 hrs  | E2E tests for critical paths       |
 
 ---
 
@@ -48,6 +48,7 @@ git push origin main
 ```
 
 **Definition of Done:**
+
 - [ ] `TOASTER-003-fix-test-runner.md` deleted
 - [ ] `TOASTER-004-phase6-testing.md` Section 1 updated
 - [ ] Changes pushed to main
@@ -61,7 +62,7 @@ git push origin main
 ### The Problem:
 
 ```
-Error: Initiated Worker with invalid NODE_OPTIONS env variable: 
+Error: Initiated Worker with invalid NODE_OPTIONS env variable:
 --openssl-config= is not allowed in NODE_OPTIONS
 ```
 
@@ -90,6 +91,7 @@ npm test
 **Expected:** Tests run without NODE_OPTIONS error.
 
 **Definition of Done:**
+
 - [ ] `npm test` runs without error
 - [ ] All existing tests pass
 - [ ] Fix committed and pushed
@@ -126,6 +128,7 @@ npx lighthouse http://localhost:5173 --output html --output-path ./lighthouse-re
 **File:** `.github/issues/TOASTER-007-e2e-critical-paths.md`
 
 Write Playwright E2E tests for:
+
 1. File upload flow (CSV → display)
 2. Chart creation flow
 3. Data filtering flow
@@ -143,6 +146,7 @@ chore: <description>
 ```
 
 Examples:
+
 - `chore: deduplicate test runner issues (CLEANUP-001)`
 - `fix(qa): resolve NODE_OPTIONS error in vitest (TOASTER-005)`
 - `test(qa): add performance benchmarks (TOASTER-006)`
@@ -163,4 +167,3 @@ Examples:
 If blocked, create a comment in the relevant issue file or ask Architect for guidance.
 
 **Good luck, Toaster! 🍞**
-
