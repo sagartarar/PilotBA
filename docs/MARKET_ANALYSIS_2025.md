@@ -10,6 +10,7 @@
 **Good News:** Our strategy is **80% aligned** with market trends.
 
 **Key Adjustments Needed:**
+
 1. Expand scope beyond visualization → Full BA/BI platform
 2. Add compliance/regulatory features (ISO 42001, GDPR)
 3. Implement "Hub & Spoke" pricing (Free reviewers)
@@ -21,11 +22,11 @@
 
 ### Market Size (We're in the Right Space)
 
-| Segment | 2025 | 2030-2035 | CAGR |
-|---------|------|-----------|------|
-| Business Analytics | $394B | $1.65T | 13.88% |
-| Enterprise BA Software | $160B | $365B | 10.90% |
-| BI Platforms | $91B | $138B | 8.7% |
+| Segment                | 2025  | 2030-2035 | CAGR   |
+| ---------------------- | ----- | --------- | ------ |
+| Business Analytics     | $394B | $1.65T    | 13.88% |
+| Enterprise BA Software | $160B | $365B     | 10.90% |
+| BI Platforms           | $91B  | $138B     | 8.7%   |
 
 **Our Target:** The "Missing Middle" - companies needing more than Jira/ClickUp but less than IBM DOORS.
 
@@ -67,6 +68,7 @@
 ### 1. Performance Differentiation (VALIDATED ✓)
 
 Report Quote:
+
 > "Tools struggle with 100K+ data points... demand for 10M+ points"
 
 **Our Approach:** WebGL2 rendering, Apache Arrow, 60 FPS with 10M points
@@ -75,6 +77,7 @@ Report Quote:
 ### 2. Client-Side Processing (VALIDATED ✓)
 
 Report Quote:
+
 > "Data Sovereignty as the New Security Perimeter... GDPR, CCPA, EU AI Act"
 
 **Our Approach:** Apache Arrow in-browser, data never leaves client
@@ -83,6 +86,7 @@ Report Quote:
 ### 3. Cost Disruption (VALIDATED ✓)
 
 Report Quote:
+
 > "High licensing fees... pricing models act as barrier to collaboration"
 
 **Our Approach:** Open source, free tier
@@ -91,6 +95,7 @@ Report Quote:
 ### 4. Modern UX (VALIDATED ✓)
 
 Report Quote:
+
 > "Poor UX leads to engineers avoiding the tool... reverting to Word/Excel"
 
 **Our Approach:** React, modern design, inspired by Linear/Notion
@@ -103,9 +108,11 @@ Report Quote:
 ### Gap 1: AI-Native Workflows (HIGH PRIORITY)
 
 **Report Insight:**
+
 > "46% of companies report tangible financial impacts from AI... demand for 'agentic' workflows"
 
 **What Leaders Offer:**
+
 - Generative elicitation (meeting transcripts → requirements)
 - Automated traceability
 - Natural Language Queries (NLQ)
@@ -114,6 +121,7 @@ Report Quote:
 **Our Current State:** No AI features planned
 
 **Recommendation:** Add to Phase 9+
+
 ```
 AI Features Roadmap:
 ├── NLQ for data queries ("Show me sales > $1000")
@@ -126,9 +134,11 @@ AI Features Roadmap:
 ### Gap 2: Compliance & Governance (MEDIUM PRIORITY)
 
 **Report Insight:**
+
 > "ISO 42001, NIS 2, EU AI Act... expanding definition of 'safety-critical'"
 
 **What Leaders Offer:**
+
 - Audit trails
 - Baseline management
 - Change request workflows
@@ -137,6 +147,7 @@ AI Features Roadmap:
 **Our Current State:** Basic error logging only
 
 **Recommendation:** Add to Phase 10+
+
 ```
 Compliance Features:
 ├── Audit log (who changed what, when)
@@ -148,9 +159,11 @@ Compliance Features:
 ### Gap 3: Integration Ecosystem (MEDIUM PRIORITY)
 
 **Report Insight:**
+
 > "Single Source of Truth fallacy... tools become data silos"
 
 **What Leaders Offer:**
+
 - Bidirectional sync with Jira, Azure DevOps
 - Database connectors (Snowflake, BigQuery, PostgreSQL)
 - API-first architecture
@@ -158,6 +171,7 @@ Compliance Features:
 **Our Current State:** File upload only (CSV, JSON)
 
 **Recommendation:** Add to Phase 8+
+
 ```
 Integration Roadmap:
 ├── Phase 8: REST API for external access
@@ -169,11 +183,13 @@ Integration Roadmap:
 ### Gap 4: Collaboration Features (LOW PRIORITY for MVP)
 
 **Report Insight:**
+
 > "Free Reviewer licenses... democratize access"
 
 **Our Current State:** Single-user focus
 
 **Recommendation:** Add to Phase 12+
+
 ```
 Collaboration Roadmap:
 ├── Sharing dashboards via link
@@ -188,17 +204,18 @@ Collaboration Roadmap:
 
 ### Market Pricing Benchmarks
 
-| Tool | Entry Price | Enterprise |
-|------|-------------|------------|
-| Power BI | Free / $10/user | $20/user |
-| Tableau | $15/user (viewer) | $75-115/user |
-| Qlik | $200/mo (10 users) | $2,750+/mo |
-| ThoughtSpot | $25-50/user | Custom |
-| Looker | ~$35,000/year | Custom |
+| Tool        | Entry Price        | Enterprise   |
+| ----------- | ------------------ | ------------ |
+| Power BI    | Free / $10/user    | $20/user     |
+| Tableau     | $15/user (viewer)  | $75-115/user |
+| Qlik        | $200/mo (10 users) | $2,750+/mo   |
+| ThoughtSpot | $25-50/user        | Custom       |
+| Looker      | ~$35,000/year      | Custom       |
 
 ### Recommended PilotBA Pricing
 
 **Report Recommendation:**
+
 > "Hub & Spoke model... Free Reviewer licenses encourage viral adoption"
 
 ```
@@ -239,6 +256,7 @@ Collaboration Roadmap:
 ```
 
 **Strategic Rationale:**
+
 - **Free tier:** Viral adoption, compete with Power BI Free
 - **$15 Pro:** Undercut Tableau ($75) and ThoughtSpot ($25-50)
 - **Free Viewers:** Remove "collaboration tax" - key differentiator
@@ -249,14 +267,17 @@ Collaboration Roadmap:
 ## 🎯 Revised Product Positioning
 
 ### Before (Our Original Position)
+
 > "High-performance visualization tool that handles 10M+ data points"
 
 ### After (Market-Aligned Position)
+
 > "The AI-native analytics platform with enterprise rigor and startup agility.
 > Handle 10M+ data points at 60 FPS. Data never leaves your browser.
 > Free for individuals, affordable for teams."
 
 ### Tagline Options
+
 1. "Enterprise analytics without the enterprise price"
 2. "The rigor of Tableau, the speed of thought"
 3. "Your data, your browser, your insights"
@@ -266,42 +287,47 @@ Collaboration Roadmap:
 
 ## 📊 Competitive Positioning Matrix
 
-| Capability | Tableau | Power BI | PilotBA (Target) |
-|------------|---------|----------|------------------|
-| Max Data Points | ~100K | ~100K | **10M+** |
-| Render Speed | 10-30 FPS | 10-30 FPS | **60 FPS** |
-| Data Privacy | Cloud | Cloud | **Client-side** |
-| Free Tier | No | Yes (limited) | **Yes** |
-| Self-Hosted | Complex | No | **Easy** |
-| AI Features | Yes | Yes | **Phase 9** |
-| Price (Team/5) | $375/mo | $50/mo | **$75/mo** |
-| Learning Curve | Steep | Medium | **Low** |
+| Capability      | Tableau   | Power BI      | PilotBA (Target) |
+| --------------- | --------- | ------------- | ---------------- |
+| Max Data Points | ~100K     | ~100K         | **10M+**         |
+| Render Speed    | 10-30 FPS | 10-30 FPS     | **60 FPS**       |
+| Data Privacy    | Cloud     | Cloud         | **Client-side**  |
+| Free Tier       | No        | Yes (limited) | **Yes**          |
+| Self-Hosted     | Complex   | No            | **Easy**         |
+| AI Features     | Yes       | Yes           | **Phase 9**      |
+| Price (Team/5)  | $375/mo   | $50/mo        | **$75/mo**       |
+| Learning Curve  | Steep     | Medium        | **Low**          |
 
 ---
 
 ## 🗓️ Revised Roadmap
 
 ### Phase 7-8: Production MVP (Current Plan) ✓
+
 - Backend API, Auth, File Storage
 - Docker deployment
 - Basic collaboration (sharing)
 
 ### Phase 9: AI Foundation (NEW - Q1 2026)
+
 - Natural Language Queries
 - Auto chart suggestions
 - Anomaly detection
 
 ### Phase 10: Integrations (NEW - Q2 2026)
+
 - Database connectors
 - REST API v2
 - Webhook support
 
 ### Phase 11: Compliance (NEW - Q2 2026)
+
 - Audit logging
 - Data lineage
 - Export for auditors
 
 ### Phase 12: Enterprise (NEW - Q3 2026)
+
 - SSO/SAML
 - Role-based access
 - Self-hosted deployment
@@ -311,19 +337,24 @@ Collaboration Roadmap:
 ## ⚡ Immediate Action Items
 
 ### For Handyman (This Week)
+
 No changes to current tasks. Continue with:
+
 - Error handling (HANDYMAN-004)
 - Bundle optimization (HANDYMAN-005)
 - Security hardening (HANDYMAN-006)
 - Backend API (HANDYMAN-007)
 
 ### For Toaster (This Week)
+
 No changes to current tasks. Continue with:
+
 - Fix test runner (TOASTER-005)
 - Performance benchmarks (TOASTER-006)
 - E2E tests (TOASTER-007)
 
 ### For Architect (Me) - New Tasks
+
 1. ✅ Document market analysis (this document)
 2. Create AI features design doc (Phase 9)
 3. Create integrations design doc (Phase 10)
@@ -334,18 +365,21 @@ No changes to current tasks. Continue with:
 ## 📝 Key Takeaways
 
 ### We Should KEEP:
+
 1. ✅ Performance focus (10M+ points, 60 FPS)
 2. ✅ Client-side processing (privacy advantage)
 3. ✅ Open source / free tier strategy
 4. ✅ Modern UX approach
 
 ### We Should ADD:
+
 1. 🆕 AI-native features (NLQ, auto-suggestions)
 2. 🆕 Free Viewer licenses (viral growth)
 3. 🆕 Database connectors (not just file upload)
 4. 🆕 Compliance/audit features (enterprise sales)
 
 ### We Should AVOID:
+
 1. ❌ Complex pricing ("Contact Sales")
 2. ❌ Requiring technical expertise
 3. ❌ Cloud-only deployment
@@ -356,6 +390,7 @@ No changes to current tasks. Continue with:
 ## 🏁 Conclusion
 
 **The market research validates our core thesis:**
+
 - There IS a "Missing Middle" between expensive enterprise tools and limited agile tools
 - Performance and privacy ARE key differentiators
 - Cost disruption IS a viable strategy
@@ -366,6 +401,7 @@ No changes to current tasks. Continue with:
 **But NOT YET.** First, we ship the MVP. Then we layer on AI and integrations.
 
 **Priority Order:**
+
 1. **Now:** Ship production-ready MVP (Phases 7-8)
 2. **Q1 2026:** Add AI features (Phase 9)
 3. **Q2 2026:** Add integrations & compliance (Phases 10-11)
@@ -373,6 +409,5 @@ No changes to current tasks. Continue with:
 
 ---
 
-*Analysis by: Architect*  
-*Sources: Market Research Reports (BA/RM Tools 2025-2030, SaaS BI Platforms 2025)*
-
+_Analysis by: Architect_  
+_Sources: Market Research Reports (BA/RM Tools 2025-2030, SaaS BI Platforms 2025)_
