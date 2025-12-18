@@ -45,7 +45,7 @@ anyhow = "1.0"
 futures-util = "0.3"
 
 # Arrow for columnar data
-arrow = "50.0"
+arrow = "57.1"
 parquet = "50.0"
 
 [dev-dependencies]
