@@ -1,0 +1,4 @@
+This is not a valid data file.
+It contains random text that should not be parsed.
+The application should reject this file type.
+
