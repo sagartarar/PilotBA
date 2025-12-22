@@ -51,7 +51,7 @@ parquet = "50.0"
 [dev-dependencies]
 actix-rt = "2.9"
 # Testing frameworks
-mockall = "0.12"
+mockall = "0.14"
 wiremock = "0.6"
 testcontainers = "0.15"
 testcontainers-modules = { version = "0.3", features = ["postgres", "redis"] }
