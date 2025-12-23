@@ -3,5 +3,6 @@ pub mod dashboard;
 pub mod auth;
 pub mod cache;
 pub mod realtime;
+pub mod audit;
 
 

@@ -85,6 +85,7 @@ async fn main() -> io::Result<()> {
                         web::scope("")
                             .wrap(middleware::AuthMiddleware)
                             .configure(routes::files::config)
+                            .configure(routes::teams::config)
                     )
             )
     })
