@@ -30,9 +30,21 @@ function createTestTable(data: Record<string, any[]>): Table {
 
 /**
  * Creates a vector from array.
+ * Note: Arrow v14 requires homogeneous types. For mixed types, we convert to strings.
  */
 function createVector(data: any[]): Vector {
-  return vectorFromArray(data);
+  // Check if all values are of the same type (excluding null/undefined)
+  const nonNullValues = data.filter(v => v !== null && v !== undefined);
+  const types = new Set(nonNullValues.map(v => typeof v));
+  
+  // If mixed types, convert all to strings
+  if (types.size > 1) {
+    return vectorFromArray(data.map(v => v === null || v === undefined ? null : String(v)));
+  }
+  
+  // Handle undefined by converting to null
+  const cleanedData = data.map(v => v === undefined ? null : v);
+  return vectorFromArray(cleanedData);
 }
 
 /**
@@ -280,11 +292,11 @@ describe("Statistics", () => {
       expect(histogram.counts.length).toBe(0);
     });
 
-    it("should skip non-numeric values", () => {
-      const column = createVector([1, "text", 2, null, 3]);
+    it("should handle null values in numeric data", () => {
+      const column = createVector([1, null, 2, null, 3]);
       const histogram = Statistics.computeHistogram(column);
 
-      // Should only count numeric values
+      // Should only count non-null values
       expect(histogram.counts.reduce((a, b) => a + b, 0)).toBe(3);
     });
 
@@ -397,9 +409,9 @@ describe("Statistics", () => {
       expect(correlation).toBeLessThan(1);
     });
 
-    it("should skip non-numeric pairs", () => {
-      const column1 = createVector([1, "text", 3, null, 5]);
-      const column2 = createVector([2, 4, "text", 8, 10]);
+    it("should handle null values in correlation", () => {
+      const column1 = createVector([1, null, 3, null, 5]);
+      const column2 = createVector([2, 4, null, 8, 10]);
 
       const correlation = Statistics.computeCorrelation(column1, column2);
 

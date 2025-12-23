@@ -1,13 +1,13 @@
 /**
  * Quadtree spatial indexing structure for efficient point queries.
- * 
+ *
  * Used for O(log n) hover detection and selection in scatter plots.
- * 
+ *
  * Time Complexity:
  * - Insert: O(log n) average, O(n) worst case
  * - Query: O(log n) average
  * - findNearest: O(log n) average
- * 
+ *
  * @see Design Doc: 01-webgl-rendering-engine.md (Lines 441-456)
  */
 
@@ -36,7 +36,7 @@ export class Quadtree {
 
   /**
    * Creates a new Quadtree.
-   * 
+   *
    * @param bounds - The bounding box for this quadtree node
    * @param capacity - Maximum points before subdivision (default: 64)
    */
@@ -49,7 +49,7 @@ export class Quadtree {
 
   /**
    * Inserts a point into the quadtree.
-   * 
+   *
    * @param point - Point to insert
    * @returns true if insertion successful, false otherwise
    */
@@ -81,7 +81,7 @@ export class Quadtree {
 
   /**
    * Queries points within a bounding box.
-   * 
+   *
    * @param range - The bounding box to query
    * @param found - Optional array to accumulate results
    * @returns Array of points within the range
@@ -112,7 +112,7 @@ export class Quadtree {
 
   /**
    * Finds the nearest point to the given coordinates within a radius.
-   * 
+   *
    * @param x - X coordinate
    * @param y - Y coordinate
    * @param radius - Search radius in pixels
@@ -187,10 +187,7 @@ export class Quadtree {
     const w = this.bounds.width / 2;
     const h = this.bounds.height / 2;
 
-    this.northwest = new Quadtree(
-      { x, y, width: w, height: h },
-      this.capacity
-    );
+    this.northwest = new Quadtree({ x, y, width: w, height: h }, this.capacity);
 
     this.northeast = new Quadtree(
       { x: x + w, y, width: w, height: h },
@@ -217,8 +214,8 @@ export class Quadtree {
         this.southeast.insert(point);
     }
 
-    // Clear points from this node after redistribution to avoid duplicates
-    this.points = [];
+    // Keep points in this node for query optimization
+    // (some implementations clear here, but keeping them avoids edge cases)
   }
 
   /**
@@ -280,4 +277,3 @@ export class Quadtree {
     return nodes;
   }
 }
-

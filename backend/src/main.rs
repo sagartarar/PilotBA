@@ -4,6 +4,7 @@
 
 use actix_web::{web, App, HttpServer, middleware as actix_middleware};
 use actix_cors::Cors;
+use sqlx::postgres::PgPoolOptions;
 use std::io;
 
 mod connectors;
@@ -34,6 +35,21 @@ async fn main() -> io::Result<()> {
             "development-secret-change-in-production".to_string()
         });
 
+    // Database connection
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "postgres://postgres:postgres@localhost:5432/pilotba".to_string());
+    
+    log::info!("Connecting to database...");
+    let pool = PgPoolOptions::new()
+        .max_connections(20)
+        .min_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(10))
+        .connect(&database_url)
+        .await
+        .expect("Failed to create database pool");
+    
+    log::info!("Database connection established");
+
     // Create upload directory
     let upload_dir = std::env::var("UPLOAD_DIR").unwrap_or_else(|_| "./uploads".to_string());
     std::fs::create_dir_all(&upload_dir).ok();
@@ -55,12 +71,14 @@ async fn main() -> io::Result<()> {
             .wrap(actix_middleware::Logger::default())
             .wrap(actix_middleware::Compress::default())
             .wrap(cors)
+            // App state
+            .app_data(web::Data::new(pool.clone()))
             // Public API routes
             .service(
                 web::scope("/api")
                     // Health check (public)
                     .configure(routes::health::config)
-                    // Auth routes (public login, protected others)
+                    // Auth routes (public login/register, protected others)
                     .configure(routes::auth::config)
                     // Protected routes
                     .service(

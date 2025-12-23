@@ -729,9 +729,81 @@ Jan 2026    | TBD        | TBD          | TBD
 - Monthly: First Monday of month 2:00 PM
 
 **Document Version Control:**
-- Version: 1.0
-- Last Updated: December 16, 2025
-- Next Review: December 23, 2025
+- Version: 1.1
+- Last Updated: December 23, 2025
+- Next Review: December 30, 2025
+
+---
+
+## Roadmap Risks (Added December 23, 2025)
+
+### Risk #9: Identity Provider Integration Complexity
+
+**Category:** Technical  
+**Status:** 🟢 Planned - Monitoring  
+**Date Identified:** December 23, 2025  
+**Probability:** Medium (2)  
+**Impact:** Medium (2)  
+**Risk Score:** 4 (Medium Priority)
+
+**Description:**
+Integrating with multiple identity providers (OAuth, SAML, LDAP) requires careful handling of different protocols and edge cases.
+
+**Mitigation Strategy:**
+1. Start with OAuth (Google, Microsoft, GitHub) - well-documented
+2. Use established libraries (oauth2-rs, samael for SAML)
+3. Build abstraction layer for all providers
+4. Phase implementation: OAuth → SAML → LDAP
+
+**Owner:** Development Agent  
+**Review Date:** February 2026
+
+---
+
+### Risk #10: Cloud Migration Data Consistency
+
+**Category:** Infrastructure  
+**Status:** 🟢 Planned - Preparing  
+**Date Identified:** December 23, 2025  
+**Probability:** Medium (2)  
+**Impact:** High (3)  
+**Risk Score:** 6 (High Priority)
+
+**Description:**
+Migrating from local PostgreSQL/MinIO to cloud-managed services (RDS, S3) could cause data loss or inconsistency if not handled properly.
+
+**Mitigation Strategy:**
+1. Use database migration tools (pg_dump/pg_restore)
+2. Implement checksums for file validation
+3. Run parallel systems during migration
+4. Have rollback plan ready
+5. Test restore procedures before migration
+
+**Owner:** Project Architect  
+**Review Date:** Before cloud migration
+
+---
+
+### Risk #11: Competitive Feature Gap
+
+**Category:** Business  
+**Status:** 🟡 Active - Monitoring  
+**Date Identified:** December 23, 2025  
+**Probability:** Low (1)  
+**Impact:** Medium (2)  
+**Risk Score:** 2 (Low Priority)
+
+**Description:**
+Tableau, Power BI, and Looker have years of feature development. Users may expect features we haven't implemented yet.
+
+**Mitigation Strategy:**
+1. Focus on performance differentiation (10M points @ 60 FPS)
+2. Prioritize most-requested features
+3. Clear documentation of supported vs. planned features
+4. Community feedback for feature prioritization
+
+**Owner:** Project Architect  
+**Review Date:** Monthly
 
 ---
 

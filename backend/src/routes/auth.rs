@@ -1,18 +1,26 @@
 //! Authentication Routes
 //!
-//! Provides login, logout, and user info endpoints.
+//! Provides registration, login, logout, refresh, and user info endpoints.
+//! Uses Argon2 for password hashing and JWT for stateless authentication.
 
 use actix_web::{web, HttpRequest, HttpResponse};
-use serde::{Deserialize, Serialize};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use serde_json::json;
+use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::errors::{ApiError, ApiResult};
-use crate::middleware::auth::{generate_jwt, get_claims, Claims};
+use crate::middleware::auth::{generate_jwt, generate_refresh_token, get_claims, Claims};
+use crate::models::{AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, User, UserInfo, UserRole};
 
 /// Configure auth routes
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/auth")
+            .route("/register", web::post().to(register))
             .route("/login", web::post().to(login))
             .route("/logout", web::post().to(logout))
             .route("/me", web::get().to(me))
@@ -20,91 +28,142 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     );
 }
 
-/// Login request body
-#[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
+/// Register endpoint
+///
+/// POST /api/auth/register
+async fn register(
+    pool: web::Data<PgPool>,
+    body: web::Json<RegisterRequest>,
+) -> ApiResult<HttpResponse> {
+    // Validate input
+    validate_registration(&body)?;
 
-/// Login response
-#[derive(Debug, Serialize)]
-pub struct LoginResponse {
-    pub token: String,
-    pub expires_in: i64,
-    pub token_type: String,
-    pub user: UserInfo,
-}
+    // Check if email already exists
+    let existing: Option<User> = sqlx::query_as(
+        "SELECT * FROM users WHERE email = $1"
+    )
+    .bind(&body.email.to_lowercase())
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
 
-/// User info response
-#[derive(Debug, Serialize, Clone)]
-pub struct UserInfo {
-    pub id: String,
-    pub email: String,
-    pub name: String,
+    if existing.is_some() {
+        return Err(ApiError::bad_request("Email already registered"));
+    }
+
+    // Hash password with Argon2
+    let password_hash = hash_password(&body.password)?;
+
+    // Create user
+    let user: User = sqlx::query_as(
+        r#"
+        INSERT INTO users (email, password_hash, name, role)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *
+        "#
+    )
+    .bind(&body.email.to_lowercase())
+    .bind(&password_hash)
+    .bind(&body.name)
+    .bind(UserRole::User)
+    .fetch_one(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Failed to create user: {}", e)))?;
+
+    // Generate tokens
+    let (access_token, refresh_token, expires_in) = generate_tokens(&user)?;
+
+    Ok(HttpResponse::Created().json(AuthResponse {
+        access_token,
+        refresh_token,
+        expires_in,
+        token_type: "Bearer".to_string(),
+        user: user.into(),
+    }))
 }
 
 /// Login endpoint
 ///
 /// POST /api/auth/login
-async fn login(body: web::Json<LoginRequest>) -> ApiResult<HttpResponse> {
+async fn login(
+    pool: web::Data<PgPool>,
+    body: web::Json<LoginRequest>,
+) -> ApiResult<HttpResponse> {
     // Validate input
     if body.email.is_empty() || body.password.is_empty() {
         return Err(ApiError::bad_request("Email and password are required"));
     }
 
-    // Validate email format (basic check)
-    if !body.email.contains('@') {
-        return Err(ApiError::bad_request("Invalid email format"));
+    // Find user by email
+    let user: Option<User> = sqlx::query_as(
+        "SELECT * FROM users WHERE email = $1"
+    )
+    .bind(&body.email.to_lowercase())
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
+
+    let user = match user {
+        Some(u) => u,
+        None => return Err(ApiError::unauthorized("Invalid email or password")),
+    };
+
+    // Verify password
+    if !verify_password(&body.password, &user.password_hash)? {
+        return Err(ApiError::unauthorized("Invalid email or password"));
     }
 
-    // TODO: Replace with actual database lookup
-    // For now, use a demo user for development
-    let demo_users = vec![
-        ("demo@pilotba.com", "demo123", "demo-user-1", "Demo User"),
-        ("admin@pilotba.com", "admin123", "admin-user-1", "Admin User"),
-    ];
+    // Generate tokens
+    let (access_token, refresh_token, expires_in) = generate_tokens(&user)?;
 
-    let user = demo_users
-        .iter()
-        .find(|(email, password, _, _)| *email == body.email && *password == body.password);
-
-    match user {
-        Some((email, _, id, name)) => {
-            let jwt_secret = std::env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "development-secret-change-in-production".to_string());
-
-            let expires_in_hours = 24;
-            let claims = Claims::new(id, email, name, expires_in_hours);
-            
-            let token = generate_jwt(&claims, &jwt_secret)
-                .map_err(|e| ApiError::internal(format!("Failed to generate token: {}", e)))?;
-
-            Ok(HttpResponse::Ok().json(LoginResponse {
-                token,
-                expires_in: expires_in_hours * 3600,
-                token_type: "Bearer".to_string(),
-                user: UserInfo {
-                    id: id.to_string(),
-                    email: email.to_string(),
-                    name: name.to_string(),
-                },
-            }))
-        }
-        None => Err(ApiError::unauthorized("Invalid email or password")),
-    }
+    Ok(HttpResponse::Ok().json(AuthResponse {
+        access_token,
+        refresh_token,
+        expires_in,
+        token_type: "Bearer".to_string(),
+        user: user.into(),
+    }))
 }
 
 /// Logout endpoint
 ///
 /// POST /api/auth/logout
-async fn logout(req: HttpRequest) -> ApiResult<HttpResponse> {
-    // In a stateless JWT setup, logout is handled client-side
-    // by removing the token. Here we just acknowledge the request.
-    
-    // If using token blacklist, add token to blacklist here
-    let _claims = get_claims(&req);
-    
+/// Adds refresh token to blacklist
+async fn logout(
+    req: HttpRequest,
+    pool: web::Data<PgPool>,
+    body: Option<web::Json<RefreshRequest>>,
+) -> ApiResult<HttpResponse> {
+    let claims = get_claims(&req);
+
+    // If refresh token provided, blacklist it
+    if let Some(refresh_body) = body {
+        let token_hash = sha256_hash(&refresh_body.refresh_token);
+        
+        // Calculate expiration (7 days from now to match refresh token expiry)
+        let expires_at = chrono::Utc::now() + chrono::Duration::days(7);
+        
+        let user_id = claims.as_ref()
+            .map(|c| Uuid::parse_str(&c.sub).ok())
+            .flatten()
+            .unwrap_or_else(Uuid::nil);
+
+        // Add to blacklist
+        sqlx::query(
+            r#"
+            INSERT INTO revoked_tokens (token_hash, user_id, expires_at)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (token_hash) DO NOTHING
+            "#
+        )
+        .bind(&token_hash)
+        .bind(&user_id)
+        .bind(&expires_at)
+        .execute(pool.get_ref())
+        .await
+        .ok(); // Ignore errors - logout should succeed anyway
+    }
+
     Ok(HttpResponse::Ok().json(json!({
         "success": true,
         "message": "Logged out successfully"
@@ -114,54 +173,282 @@ async fn logout(req: HttpRequest) -> ApiResult<HttpResponse> {
 /// Get current user info
 ///
 /// GET /api/auth/me
-async fn me(req: HttpRequest) -> ApiResult<HttpResponse> {
+async fn me(
+    req: HttpRequest,
+    pool: web::Data<PgPool>,
+) -> ApiResult<HttpResponse> {
     let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
 
-    Ok(HttpResponse::Ok().json(UserInfo {
-        id: claims.sub,
-        email: claims.email,
-        name: claims.name,
-    }))
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID in token"))?;
+
+    // Fetch fresh user data from database
+    let user: Option<User> = sqlx::query_as(
+        "SELECT * FROM users WHERE id = $1"
+    )
+    .bind(&user_id)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
+
+    match user {
+        Some(u) => Ok(HttpResponse::Ok().json(UserInfo::from(u))),
+        None => Err(ApiError::unauthorized("User not found")),
+    }
 }
 
 /// Refresh token endpoint
 ///
 /// POST /api/auth/refresh
-async fn refresh_token(req: HttpRequest) -> ApiResult<HttpResponse> {
-    let claims = get_claims(&req)
-        .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
+async fn refresh_token(
+    pool: web::Data<PgPool>,
+    body: web::Json<RefreshRequest>,
+) -> ApiResult<HttpResponse> {
+    // Validate refresh token format (basic check)
+    if body.refresh_token.len() < 32 {
+        return Err(ApiError::unauthorized("Invalid refresh token"));
+    }
 
-    let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "development-secret-change-in-production".to_string());
+    let token_hash = sha256_hash(&body.refresh_token);
 
-    let expires_in_hours = 24;
-    let new_claims = Claims::new(&claims.sub, &claims.email, &claims.name, expires_in_hours);
-    
-    let token = generate_jwt(&new_claims, &jwt_secret)
-        .map_err(|e| ApiError::internal(format!("Failed to generate token: {}", e)))?;
+    // Check if token is blacklisted
+    let is_revoked: Option<(String,)> = sqlx::query_as(
+        "SELECT token_hash FROM revoked_tokens WHERE token_hash = $1"
+    )
+    .bind(&token_hash)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
 
-    Ok(HttpResponse::Ok().json(json!({
-        "token": token,
-        "expires_in": expires_in_hours * 3600,
-        "token_type": "Bearer"
-    })))
+    if is_revoked.is_some() {
+        return Err(ApiError::unauthorized("Token has been revoked"));
+    }
+
+    // Decode the refresh token to get user info
+    let jwt_secret = get_jwt_secret();
+    let claims = crate::middleware::auth::validate_refresh_token(&body.refresh_token, &jwt_secret)
+        .map_err(|_| ApiError::unauthorized("Invalid or expired refresh token"))?;
+
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID in token"))?;
+
+    // Fetch user to ensure they still exist and get current data
+    let user: Option<User> = sqlx::query_as(
+        "SELECT * FROM users WHERE id = $1"
+    )
+    .bind(&user_id)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
+
+    let user = match user {
+        Some(u) => u,
+        None => return Err(ApiError::unauthorized("User not found")),
+    };
+
+    // Generate new tokens
+    let (access_token, new_refresh_token, expires_in) = generate_tokens(&user)?;
+
+    // Optionally blacklist the old refresh token (rotation)
+    let expires_at = chrono::Utc::now() + chrono::Duration::days(7);
+    sqlx::query(
+        "INSERT INTO revoked_tokens (token_hash, user_id, expires_at) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING"
+    )
+    .bind(&token_hash)
+    .bind(&user.id)
+    .bind(&expires_at)
+    .execute(pool.get_ref())
+    .await
+    .ok();
+
+    Ok(HttpResponse::Ok().json(AuthResponse {
+        access_token,
+        refresh_token: new_refresh_token,
+        expires_in,
+        token_type: "Bearer".to_string(),
+        user: user.into(),
+    }))
 }
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/// Validate registration input
+fn validate_registration(req: &RegisterRequest) -> ApiResult<()> {
+    // Check required fields
+    if req.email.is_empty() {
+        return Err(ApiError::bad_request("Email is required"));
+    }
+    if req.password.is_empty() {
+        return Err(ApiError::bad_request("Password is required"));
+    }
+    if req.name.is_empty() {
+        return Err(ApiError::bad_request("Name is required"));
+    }
+
+    // Validate email format
+    if !req.email.contains('@') || !req.email.contains('.') {
+        return Err(ApiError::bad_request("Invalid email format"));
+    }
+
+    // Validate password strength
+    if req.password.len() < 8 {
+        return Err(ApiError::bad_request("Password must be at least 8 characters"));
+    }
+
+    // Check for mixed character types
+    let has_lowercase = req.password.chars().any(|c| c.is_lowercase());
+    let has_uppercase = req.password.chars().any(|c| c.is_uppercase());
+    let has_digit = req.password.chars().any(|c| c.is_ascii_digit());
+    
+    if !has_lowercase || !has_uppercase || !has_digit {
+        return Err(ApiError::bad_request(
+            "Password must contain lowercase, uppercase, and numeric characters"
+        ));
+    }
+
+    // Validate name length
+    if req.name.len() < 2 || req.name.len() > 100 {
+        return Err(ApiError::bad_request("Name must be between 2 and 100 characters"));
+    }
+
+    Ok(())
+}
+
+/// Hash password using Argon2
+fn hash_password(password: &str) -> ApiResult<String> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    
+    let hash = argon2
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|e| ApiError::internal(format!("Password hashing failed: {}", e)))?;
+    
+    Ok(hash.to_string())
+}
+
+/// Verify password against hash
+fn verify_password(password: &str, hash: &str) -> ApiResult<bool> {
+    let parsed_hash = PasswordHash::new(hash)
+        .map_err(|e| ApiError::internal(format!("Invalid password hash: {}", e)))?;
+    
+    Ok(Argon2::default()
+        .verify_password(password.as_bytes(), &parsed_hash)
+        .is_ok())
+}
+
+/// Generate access and refresh tokens
+fn generate_tokens(user: &User) -> ApiResult<(String, String, i64)> {
+    let jwt_secret = get_jwt_secret();
+    
+    // Access token: 1 hour
+    let access_expires_hours = 1;
+    let access_claims = Claims::new(
+        &user.id.to_string(),
+        &user.email,
+        &user.name,
+        access_expires_hours,
+    );
+    let access_token = generate_jwt(&access_claims, &jwt_secret)
+        .map_err(|e| ApiError::internal(format!("Failed to generate access token: {}", e)))?;
+
+    // Refresh token: 7 days
+    let refresh_expires_hours = 7 * 24;
+    let refresh_claims = Claims::new(
+        &user.id.to_string(),
+        &user.email,
+        &user.name,
+        refresh_expires_hours,
+    );
+    let refresh_token = generate_refresh_token(&refresh_claims, &jwt_secret)
+        .map_err(|e| ApiError::internal(format!("Failed to generate refresh token: {}", e)))?;
+
+    Ok((access_token, refresh_token, access_expires_hours * 3600))
+}
+
+/// Get JWT secret from environment
+fn get_jwt_secret() -> String {
+    std::env::var("JWT_SECRET")
+        .unwrap_or_else(|_| "development-secret-change-in-production".to_string())
+}
+
+/// SHA256 hash for token blacklisting
+fn sha256_hash(input: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    
+    let mut hasher = DefaultHasher::new();
+    input.hash(&mut hasher);
+    format!("{:016x}", hasher.finish())
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_login_request_validation() {
-        let req = LoginRequest {
-            email: "test@example.com".to_string(),
-            password: "password123".to_string(),
-        };
+    fn test_password_hashing() {
+        let password = "SecureP@ss123";
+        let hash = hash_password(password).unwrap();
         
-        assert!(!req.email.is_empty());
-        assert!(!req.password.is_empty());
-        assert!(req.email.contains('@'));
+        assert!(hash.starts_with("$argon2"));
+        assert!(verify_password(password, &hash).unwrap());
+        assert!(!verify_password("wrongpassword", &hash).unwrap());
+    }
+
+    #[test]
+    fn test_validation_empty_email() {
+        let req = RegisterRequest {
+            email: "".to_string(),
+            password: "SecureP@ss123".to_string(),
+            name: "Test User".to_string(),
+        };
+        assert!(validate_registration(&req).is_err());
+    }
+
+    #[test]
+    fn test_validation_weak_password() {
+        let req = RegisterRequest {
+            email: "test@example.com".to_string(),
+            password: "weak".to_string(),
+            name: "Test User".to_string(),
+        };
+        assert!(validate_registration(&req).is_err());
+    }
+
+    #[test]
+    fn test_validation_password_no_uppercase() {
+        let req = RegisterRequest {
+            email: "test@example.com".to_string(),
+            password: "nouppercase123".to_string(),
+            name: "Test User".to_string(),
+        };
+        assert!(validate_registration(&req).is_err());
+    }
+
+    #[test]
+    fn test_validation_valid_request() {
+        let req = RegisterRequest {
+            email: "test@example.com".to_string(),
+            password: "SecureP@ss123".to_string(),
+            name: "Test User".to_string(),
+        };
+        assert!(validate_registration(&req).is_ok());
+    }
+
+    #[test]
+    fn test_sha256_hash() {
+        let hash1 = sha256_hash("test-token");
+        let hash2 = sha256_hash("test-token");
+        let hash3 = sha256_hash("different-token");
+        
+        assert_eq!(hash1, hash2);
+        assert_ne!(hash1, hash3);
     }
 }
-

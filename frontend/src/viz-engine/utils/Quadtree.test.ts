@@ -1,12 +1,12 @@
 /**
  * Quadtree Tests
- * 
+ *
  * Comprehensive tests for Quadtree spatial indexing including:
  * - Basic operations (insert, query, findNearest)
  * - Performance tests (O(log n) operations)
  * - Edge cases
  * - Security tests
- * 
+ *
  * @author Toaster (Senior QA Engineer)
  * @see Design Doc: 01-webgl-rendering-engine.md (Lines 441-456)
  */
@@ -424,7 +424,7 @@ describe('Quadtree', () => {
   // ============================================================================
 
   describe('Performance Tests', () => {
-    it('should insert 10,000 points in < 500ms', () => {
+    it('should insert 10,000 points in < 100ms', () => {
       const points = generateRandomPoints(10000, defaultBounds);
 
       const start = performance.now();
@@ -432,12 +432,10 @@ describe('Quadtree', () => {
       const duration = performance.now() - start;
 
       expect(quadtree.size()).toBe(10000);
-      expect(duration).toBeLessThan(500); // Relaxed for CI
-      
-      console.log(`Insert 10K points: ${duration.toFixed(2)}ms`);
+      expect(duration).toBeLessThan(100);
     });
 
-    it('should insert 100,000 points in < 3000ms', () => {
+    it('should insert 100,000 points in < 500ms', () => {
       const points = generateRandomPoints(100000, defaultBounds);
 
       const start = performance.now();
@@ -445,8 +443,8 @@ describe('Quadtree', () => {
       const duration = performance.now() - start;
 
       expect(quadtree.size()).toBe(100000);
-      expect(duration).toBeLessThan(3000); // Relaxed for CI
-      
+      expect(duration).toBeLessThan(500);
+
       console.log(`Insert 100K points: ${duration.toFixed(2)}ms`);
     });
 
@@ -463,8 +461,8 @@ describe('Quadtree', () => {
       const duration = performance.now() - start;
 
       // 1000 queries should be fast
-      expect(duration).toBeLessThan(500); // Relaxed for CI
-      
+      expect(duration).toBeLessThan(100);
+
       console.log(`1000 queries on 100K points: ${duration.toFixed(2)}ms`);
     });
 
@@ -483,7 +481,7 @@ describe('Quadtree', () => {
       const duration = performance.now() - start;
 
       expect(duration).toBeLessThan(200);
-      
+
       console.log(`1000 findNearest on 100K points: ${duration.toFixed(2)}ms`);
     });
 

@@ -1,25 +1,25 @@
 /**
  * Line Simplification Tests
- * 
+ *
  * Comprehensive tests for line simplification algorithms including:
  * - Douglas-Peucker algorithm
  * - Visvalingam-Whyatt algorithm
  * - Level of Detail (LOD) simplification
  * - Adaptive tolerance calculation
  * - Performance tests
- * 
+ *
  * @author Toaster (Senior QA Engineer)
  * @see Design Doc: 01-webgl-rendering-engine.md (Lines 329-343)
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   simplifyLine,
   calculateTolerance,
   simplifyByArea,
   simplifyByLOD,
   Point,
-} from './simplify';
+} from "./simplify";
 
 // ============================================================================
 // TEST HELPERS
@@ -28,7 +28,11 @@ import {
 /**
  * Generates a straight line of points.
  */
-function generateStraightLine(count: number, start: Point, end: Point): Point[] {
+function generateStraightLine(
+  count: number,
+  start: Point,
+  end: Point
+): Point[] {
   const points: Point[] = [];
   for (let i = 0; i < count; i++) {
     const t = i / (count - 1);
@@ -43,7 +47,11 @@ function generateStraightLine(count: number, start: Point, end: Point): Point[] 
 /**
  * Generates a sine wave of points.
  */
-function generateSineWave(count: number, amplitude: number, frequency: number): Point[] {
+function generateSineWave(
+  count: number,
+  amplitude: number,
+  frequency: number
+): Point[] {
   const points: Point[] = [];
   for (let i = 0; i < count; i++) {
     const x = i;
@@ -99,25 +107,32 @@ function pathLength(points: Point[]): number {
 // DOUGLAS-PEUCKER ALGORITHM TESTS
 // ============================================================================
 
-describe('Line Simplification', () => {
-  describe('Douglas-Peucker Algorithm', () => {
-    it('should return original points for 2 or fewer points', () => {
-      const twoPoints: Point[] = [{ x: 0, y: 0 }, { x: 100, y: 100 }];
+describe("Line Simplification", () => {
+  describe("Douglas-Peucker Algorithm", () => {
+    it("should return original points for 2 or fewer points", () => {
+      const twoPoints: Point[] = [
+        { x: 0, y: 0 },
+        { x: 100, y: 100 },
+      ];
       const simplified = simplifyLine(twoPoints, 10);
 
       expect(simplified.length).toBe(2);
       expect(simplified).toEqual(twoPoints);
     });
 
-    it('should return original points for single point', () => {
+    it("should return original points for single point", () => {
       const onePoint: Point[] = [{ x: 50, y: 50 }];
       const simplified = simplifyLine(onePoint, 10);
 
       expect(simplified.length).toBe(1);
     });
 
-    it('should simplify straight line to two points', () => {
-      const line = generateStraightLine(100, { x: 0, y: 0 }, { x: 100, y: 100 });
+    it("should simplify straight line to two points", () => {
+      const line = generateStraightLine(
+        100,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
       const simplified = simplifyLine(line, 1);
 
       expect(simplified.length).toBe(2);
@@ -125,7 +140,7 @@ describe('Line Simplification', () => {
       expect(simplified[simplified.length - 1]).toEqual({ x: 100, y: 100 });
     });
 
-    it('should preserve endpoints', () => {
+    it("should preserve endpoints", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: 50, y: 10 },
@@ -134,10 +149,12 @@ describe('Line Simplification', () => {
       const simplified = simplifyLine(points, 5);
 
       expect(simplified[0]).toEqual(points[0]);
-      expect(simplified[simplified.length - 1]).toEqual(points[points.length - 1]);
+      expect(simplified[simplified.length - 1]).toEqual(
+        points[points.length - 1]
+      );
     });
 
-    it('should keep significant points with zigzag pattern', () => {
+    it("should keep significant points with zigzag pattern", () => {
       const zigzag = generateZigzag(10, 50);
       const simplified = simplifyLine(zigzag, 10);
 
@@ -145,16 +162,16 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBeGreaterThan(2);
     });
 
-    it('should reduce points more with higher tolerance', () => {
+    it("should reduce points more with higher tolerance", () => {
       const wave = generateSineWave(100, 50, 0.1);
-      
+
       const lowTolerance = simplifyLine(wave, 1);
       const highTolerance = simplifyLine(wave, 20);
 
       expect(highTolerance.length).toBeLessThan(lowTolerance.length);
     });
 
-    it('should return all points with zero tolerance', () => {
+    it("should return all points with zero tolerance", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: 50, y: 25 },
@@ -165,7 +182,7 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(3);
     });
 
-    it('should handle collinear points', () => {
+    it("should handle collinear points", () => {
       const collinear: Point[] = [
         { x: 0, y: 0 },
         { x: 25, y: 25 },
@@ -178,7 +195,7 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle sharp corners', () => {
+    it("should handle sharp corners", () => {
       const corners: Point[] = [
         { x: 0, y: 0 },
         { x: 50, y: 0 },
@@ -196,8 +213,8 @@ describe('Line Simplification', () => {
   // TOLERANCE CALCULATION TESTS
   // ============================================================================
 
-  describe('Tolerance Calculation', () => {
-    it('should calculate tolerance based on zoom level', () => {
+  describe("Tolerance Calculation", () => {
+    it("should calculate tolerance based on zoom level", () => {
       const tolerance1 = calculateTolerance(1, 1000, 1);
       const tolerance2 = calculateTolerance(2, 1000, 1);
 
@@ -205,24 +222,24 @@ describe('Line Simplification', () => {
       expect(tolerance2).toBe(0.5);
     });
 
-    it('should scale tolerance with base pixel tolerance', () => {
+    it("should scale tolerance with base pixel tolerance", () => {
       const tolerance1 = calculateTolerance(1, 1000, 1);
       const tolerance2 = calculateTolerance(1, 1000, 2);
 
       expect(tolerance2).toBe(tolerance1 * 2);
     });
 
-    it('should use default base pixel tolerance', () => {
+    it("should use default base pixel tolerance", () => {
       const tolerance = calculateTolerance(1, 1000);
       expect(tolerance).toBe(1);
     });
 
-    it('should handle high zoom levels', () => {
+    it("should handle high zoom levels", () => {
       const tolerance = calculateTolerance(100, 1000, 1);
       expect(tolerance).toBe(0.01);
     });
 
-    it('should handle low zoom levels', () => {
+    it("should handle low zoom levels", () => {
       const tolerance = calculateTolerance(0.1, 1000, 1);
       expect(tolerance).toBe(10);
     });
@@ -232,15 +249,15 @@ describe('Line Simplification', () => {
   // VISVALINGAM-WHYATT ALGORITHM TESTS
   // ============================================================================
 
-  describe('Visvalingam-Whyatt Algorithm (simplifyByArea)', () => {
-    it('should reduce to target point count', () => {
+  describe("Visvalingam-Whyatt Algorithm (simplifyByArea)", () => {
+    it("should reduce to target point count", () => {
       const points = generateSineWave(100, 50, 0.1);
       const simplified = simplifyByArea(points, 20);
 
       expect(simplified.length).toBeLessThanOrEqual(20);
     });
 
-    it('should return original if target >= length', () => {
+    it("should return original if target >= length", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: 50, y: 50 },
@@ -251,22 +268,27 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(3);
     });
 
-    it('should preserve first and last points', () => {
+    it("should preserve first and last points", () => {
       const points = generateRandomWalk(50, 10);
       const simplified = simplifyByArea(points, 10);
 
       expect(simplified[0]).toEqual(points[0]);
-      expect(simplified[simplified.length - 1]).toEqual(points[points.length - 1]);
+      expect(simplified[simplified.length - 1]).toEqual(
+        points[points.length - 1]
+      );
     });
 
-    it('should return original for 2 or fewer points', () => {
-      const twoPoints: Point[] = [{ x: 0, y: 0 }, { x: 100, y: 100 }];
+    it("should return original for 2 or fewer points", () => {
+      const twoPoints: Point[] = [
+        { x: 0, y: 0 },
+        { x: 100, y: 100 },
+      ];
       const simplified = simplifyByArea(twoPoints, 1);
 
       expect(simplified.length).toBe(2);
     });
 
-    it('should remove points with smallest effective area first', () => {
+    it("should remove points with smallest effective area first", () => {
       // Triangle with one point very close to line
       const points: Point[] = [
         { x: 0, y: 0 },
@@ -276,7 +298,10 @@ describe('Line Simplification', () => {
       const simplified = simplifyByArea(points, 2);
 
       expect(simplified.length).toBe(2);
-      expect(simplified).toEqual([{ x: 0, y: 0 }, { x: 100, y: 0 }]);
+      expect(simplified).toEqual([
+        { x: 0, y: 0 },
+        { x: 100, y: 0 },
+      ]);
     });
   });
 
@@ -284,35 +309,53 @@ describe('Line Simplification', () => {
   // LEVEL OF DETAIL TESTS
   // ============================================================================
 
-  describe('Level of Detail (simplifyByLOD)', () => {
-    it('should return all points at high zoom', () => {
-      const points = generateStraightLine(100, { x: 0, y: 0 }, { x: 100, y: 100 });
+  describe("Level of Detail (simplifyByLOD)", () => {
+    it("should return all points at high zoom", () => {
+      const points = generateStraightLine(
+        100,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
       const simplified = simplifyByLOD(points, 10);
 
       expect(simplified.length).toBe(100);
     });
 
-    it('should reduce points at medium zoom', () => {
-      const points = generateStraightLine(100, { x: 0, y: 0 }, { x: 100, y: 100 });
+    it("should reduce points at medium zoom", () => {
+      const points = generateStraightLine(
+        100,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
       const simplified = simplifyByLOD(points, 2);
 
       expect(simplified.length).toBeLessThan(100);
       expect(simplified.length).toBeGreaterThan(2);
     });
 
-    it('should heavily reduce points at low zoom', () => {
-      const points = generateStraightLine(1000, { x: 0, y: 0 }, { x: 1000, y: 1000 });
+    it("should heavily reduce points at low zoom", () => {
+      const points = generateStraightLine(
+        1000,
+        { x: 0, y: 0 },
+        { x: 1000, y: 1000 }
+      );
       const simplified = simplifyByLOD(points, 0.5);
 
       expect(simplified.length).toBeLessThan(50);
     });
 
-    it('should always include first and last points', () => {
-      const points = generateStraightLine(100, { x: 0, y: 0 }, { x: 100, y: 100 });
+    it("should always include first and last points", () => {
+      const points = generateStraightLine(
+        100,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
       const simplified = simplifyByLOD(points, 0.5);
 
       expect(simplified[0]).toEqual(points[0]);
-      expect(simplified[simplified.length - 1]).toEqual(points[points.length - 1]);
+      expect(simplified[simplified.length - 1]).toEqual(
+        points[points.length - 1]
+      );
     });
   });
 
@@ -320,13 +363,13 @@ describe('Line Simplification', () => {
   // EDGE CASES
   // ============================================================================
 
-  describe('Edge Cases', () => {
-    it('should handle empty array', () => {
+  describe("Edge Cases", () => {
+    it("should handle empty array", () => {
       const simplified = simplifyLine([], 10);
       expect(simplified.length).toBe(0);
     });
 
-    it('should handle negative coordinates', () => {
+    it("should handle negative coordinates", () => {
       const points: Point[] = [
         { x: -100, y: -100 },
         { x: 0, y: 0 },
@@ -337,7 +380,7 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle very small coordinates', () => {
+    it("should handle very small coordinates", () => {
       const points: Point[] = [
         { x: 0.001, y: 0.001 },
         { x: 0.002, y: 0.002 },
@@ -348,7 +391,7 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle very large coordinates', () => {
+    it("should handle very large coordinates", () => {
       const points: Point[] = [
         { x: 1e10, y: 1e10 },
         { x: 2e10, y: 2e10 },
@@ -359,7 +402,7 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle duplicate points', () => {
+    it("should handle duplicate points", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: 0, y: 0 },
@@ -371,21 +414,29 @@ describe('Line Simplification', () => {
       expect(simplified.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should handle vertical line', () => {
-      const points = generateStraightLine(100, { x: 50, y: 0 }, { x: 50, y: 100 });
+    it("should handle vertical line", () => {
+      const points = generateStraightLine(
+        100,
+        { x: 50, y: 0 },
+        { x: 50, y: 100 }
+      );
       const simplified = simplifyLine(points, 1);
 
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle horizontal line', () => {
-      const points = generateStraightLine(100, { x: 0, y: 50 }, { x: 100, y: 50 });
+    it("should handle horizontal line", () => {
+      const points = generateStraightLine(
+        100,
+        { x: 0, y: 50 },
+        { x: 100, y: 50 }
+      );
       const simplified = simplifyLine(points, 1);
 
       expect(simplified.length).toBe(2);
     });
 
-    it('should handle single point line (degenerate)', () => {
+    it("should handle single point line (degenerate)", () => {
       const points: Point[] = [
         { x: 50, y: 50 },
         { x: 50, y: 50 },
@@ -401,8 +452,8 @@ describe('Line Simplification', () => {
   // SECURITY TESTS
   // ============================================================================
 
-  describe('Security Tests', () => {
-    it('should handle NaN coordinates', () => {
+  describe("Security Tests", () => {
+    it("should handle NaN coordinates", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: NaN, y: 50 },
@@ -413,7 +464,7 @@ describe('Line Simplification', () => {
       expect(() => simplifyLine(points, 10)).not.toThrow();
     });
 
-    it('should handle Infinity coordinates', () => {
+    it("should handle Infinity coordinates", () => {
       const points: Point[] = [
         { x: 0, y: 0 },
         { x: Infinity, y: 50 },
@@ -423,14 +474,18 @@ describe('Line Simplification', () => {
       expect(() => simplifyLine(points, 10)).not.toThrow();
     });
 
-    it('should handle negative tolerance gracefully', () => {
-      const points = generateStraightLine(10, { x: 0, y: 0 }, { x: 100, y: 100 });
+    it("should handle negative tolerance gracefully", () => {
+      const points = generateStraightLine(
+        10,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
 
       // Negative tolerance should work like zero tolerance
       expect(() => simplifyLine(points, -10)).not.toThrow();
     });
 
-    it('should handle very large tolerance', () => {
+    it("should handle very large tolerance", () => {
       const points = generateSineWave(100, 50, 0.1);
       const simplified = simplifyLine(points, 1e10);
 
@@ -443,8 +498,8 @@ describe('Line Simplification', () => {
   // QUALITY TESTS
   // ============================================================================
 
-  describe('Quality Tests', () => {
-    it('should preserve visual shape', () => {
+  describe("Quality Tests", () => {
+    it("should preserve visual shape", () => {
       const wave = generateSineWave(100, 50, 0.1);
       const simplified = simplifyLine(wave, 5);
 
@@ -461,7 +516,7 @@ describe('Line Simplification', () => {
       expect(hasNegative).toBe(true);
     });
 
-    it('should not increase path length significantly', () => {
+    it("should not increase path length significantly", () => {
       const wave = generateSineWave(100, 50, 0.1);
       const simplified = simplifyLine(wave, 5);
 
@@ -472,8 +527,12 @@ describe('Line Simplification', () => {
       expect(simplifiedLength).toBeLessThanOrEqual(originalLength);
     });
 
-    it('should maintain monotonicity when possible', () => {
-      const monotonic = generateStraightLine(100, { x: 0, y: 0 }, { x: 100, y: 100 });
+    it("should maintain monotonicity when possible", () => {
+      const monotonic = generateStraightLine(
+        100,
+        { x: 0, y: 0 },
+        { x: 100, y: 100 }
+      );
       const simplified = simplifyLine(monotonic, 1);
 
       // Check x coordinates are still monotonically increasing
@@ -487,8 +546,8 @@ describe('Line Simplification', () => {
   // PERFORMANCE TESTS
   // ============================================================================
 
-  describe('Performance Tests', () => {
-    it('should simplify 10,000 points in < 200ms', () => {
+  describe("Performance Tests", () => {
+    it("should simplify 10,000 points in < 50ms", () => {
       const points = generateRandomWalk(10000, 1);
 
       const start = performance.now();
@@ -496,12 +555,16 @@ describe('Line Simplification', () => {
       const duration = performance.now() - start;
 
       expect(simplified.length).toBeLessThan(10000);
-      expect(duration).toBeLessThan(200); // Relaxed for CI
-      
-      console.log(`Simplify 10K points: ${duration.toFixed(2)}ms, reduced to ${simplified.length}`);
+      expect(duration).toBeLessThan(50);
+
+      console.log(
+        `Simplify 10K points: ${duration.toFixed(2)}ms, reduced to ${
+          simplified.length
+        }`
+      );
     });
 
-    it('should simplify 100,000 points in < 3000ms', () => {
+    it("should simplify 100,000 points in < 500ms", () => {
       const points = generateRandomWalk(100000, 1);
 
       const start = performance.now();
@@ -509,12 +572,16 @@ describe('Line Simplification', () => {
       const duration = performance.now() - start;
 
       expect(simplified.length).toBeLessThan(100000);
-      expect(duration).toBeLessThan(3000); // Relaxed for CI
-      
-      console.log(`Simplify 100K points: ${duration.toFixed(2)}ms, reduced to ${simplified.length}`);
+      expect(duration).toBeLessThan(500);
+
+      console.log(
+        `Simplify 100K points: ${duration.toFixed(2)}ms, reduced to ${
+          simplified.length
+        }`
+      );
     });
 
-    it('should handle simplifyByArea efficiently', () => {
+    it("should handle simplifyByArea efficiently", () => {
       const points = generateRandomWalk(10000, 1);
 
       const start = performance.now();
@@ -522,12 +589,10 @@ describe('Line Simplification', () => {
       const duration = performance.now() - start;
 
       expect(simplified.length).toBeLessThanOrEqual(500);
-      expect(duration).toBeLessThan(3000); // Relaxed for CI
-      
-      console.log(`SimplifyByArea 10K points: ${duration.toFixed(2)}ms, reduced to ${simplified.length}`);
+      expect(duration).toBeLessThan(500);
     });
 
-    it('should handle simplifyByLOD efficiently', () => {
+    it("should handle simplifyByLOD efficiently", () => {
       const points = generateRandomWalk(100000, 1);
 
       const start = performance.now();
@@ -535,12 +600,10 @@ describe('Line Simplification', () => {
       const duration = performance.now() - start;
 
       expect(simplified.length).toBeLessThan(100000);
-      expect(duration).toBeLessThan(500); // Relaxed for CI
-      
-      console.log(`SimplifyByLOD 100K points: ${duration.toFixed(2)}ms, reduced to ${simplified.length}`);
+      expect(duration).toBeLessThan(50);
     });
 
-    it('should scale sub-linearly with point count', () => {
+    it("should scale sub-linearly with point count", () => {
       const points10k = generateRandomWalk(10000, 1);
       const points100k = generateRandomWalk(100000, 1);
 
@@ -552,11 +615,9 @@ describe('Line Simplification', () => {
       simplifyLine(points100k, 5);
       const duration100k = performance.now() - start100k;
 
-      console.log(`10K: ${duration10k.toFixed(2)}ms, 100K: ${duration100k.toFixed(2)}ms`);
-
       // 10x more points should not take 10x longer
-      // Douglas-Peucker is O(n log n) average - relaxed threshold for CI
-      expect(duration100k).toBeLessThan(duration10k * 20);
+      // Douglas-Peucker is O(n log n) average
+      expect(duration100k).toBeLessThan(duration10k * 15);
     });
   });
 
@@ -564,8 +625,8 @@ describe('Line Simplification', () => {
   // REDUCTION RATIO TESTS
   // ============================================================================
 
-  describe('Reduction Ratio Tests', () => {
-    it('should achieve significant reduction on noisy data', () => {
+  describe("Reduction Ratio Tests", () => {
+    it("should achieve significant reduction on noisy data", () => {
       const noisy = generateRandomWalk(1000, 1);
       const simplified = simplifyLine(noisy, 10);
 
@@ -573,15 +634,19 @@ describe('Line Simplification', () => {
       expect(reductionRatio).toBeLessThan(0.5); // At least 50% reduction
     });
 
-    it('should achieve near-total reduction on straight line', () => {
-      const straight = generateStraightLine(1000, { x: 0, y: 0 }, { x: 1000, y: 1000 });
+    it("should achieve near-total reduction on straight line", () => {
+      const straight = generateStraightLine(
+        1000,
+        { x: 0, y: 0 },
+        { x: 1000, y: 1000 }
+      );
       const simplified = simplifyLine(straight, 1);
 
       const reductionRatio = simplified.length / straight.length;
       expect(reductionRatio).toBeLessThan(0.01); // 99%+ reduction
     });
 
-    it('should preserve detail on complex shapes', () => {
+    it("should preserve detail on complex shapes", () => {
       const wave = generateSineWave(1000, 50, 0.1);
       const simplified = simplifyLine(wave, 1);
 
@@ -590,4 +655,3 @@ describe('Line Simplification', () => {
     });
   });
 });
-

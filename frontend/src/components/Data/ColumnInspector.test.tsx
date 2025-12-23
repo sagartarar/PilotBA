@@ -323,7 +323,7 @@ describe('ColumnInspector', () => {
   });
 
   describe('Number Formatting', () => {
-    it('should format large numbers with commas', () => {
+    it('should format large numbers with commas', async () => {
       const { Statistics } = vi.mocked(await import('../../data-pipeline/utils/Statistics'));
       Statistics.computeColumnStats.mockReturnValue({
         min: 0,
@@ -344,7 +344,7 @@ describe('ColumnInspector', () => {
       expect(screen.getByText('1,000,000')).toBeInTheDocument();
     });
 
-    it('should format decimal numbers appropriately', () => {
+    it('should format decimal numbers appropriately', async () => {
       const { Statistics } = vi.mocked(await import('../../data-pipeline/utils/Statistics'));
       Statistics.computeColumnStats.mockReturnValue({
         min: 0.123456,

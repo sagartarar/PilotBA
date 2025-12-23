@@ -7,7 +7,7 @@
  * @see Design Doc: 02-data-processing-pipeline.md
  */
 
-import { Table, tableFromIPC, RecordBatchReader } from 'apache-arrow';
+import { Table, tableFromIPC, RecordBatchReader, tableFromArrays } from 'apache-arrow';
 
 export interface ArrowParseOptions {
   streaming?: boolean;
@@ -45,11 +45,20 @@ export class ArrowParser {
       // Parse using Arrow's tableFromIPC
       const table = tableFromIPC(data);
 
+      // Extract schema information as a plain object (Arrow v14 compatible)
+      const schemaInfo = {
+        fields: table.schema.fields.map(field => ({
+          name: field.name,
+          type: field.type.toString(),
+          nullable: field.nullable,
+        })),
+      };
+
       return {
         table,
         rowCount: table.numRows,
         columnCount: table.numCols,
-        schema: table.schema.toJSON(),
+        schema: schemaInfo,
       };
     } catch (error) {
       throw new Error(`Arrow IPC parsing failed: ${(error as Error).message}`);
@@ -74,8 +83,21 @@ export class ArrowParser {
 
       // Process each batch
       for await (const batch of reader) {
-        // Convert batch to table - batch has schema and data
-        const table = new Table(batch.schema, Array.from({ length: batch.numCols }, (_, i) => batch.getChildAt(i)!));
+        // Convert batch to table using tableFromArrays (Arrow v14 compatible)
+        const columns: Record<string, any[]> = {};
+        
+        for (const field of batch.schema.fields) {
+          const column = batch.getChild(field.name);
+          if (column) {
+            const values: any[] = [];
+            for (let i = 0; i < column.length; i++) {
+              values.push(column.get(i));
+            }
+            columns[field.name] = values;
+          }
+        }
+        
+        const table = tableFromArrays(columns);
         onBatch(table);
       }
     } catch (error) {

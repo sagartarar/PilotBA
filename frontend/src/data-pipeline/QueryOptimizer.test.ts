@@ -12,18 +12,15 @@
  * - Optimization time < 10ms
  * - Correct cost estimation
  * - Predicate pushdown validation
+ * 
+ * @author Toaster (QA Lead)
+ * @updated December 23, 2025 - Fixed static method calls
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { QueryOptimizer, type QueryPlan, type Operation } from './QueryOptimizer'
 
 describe('QueryOptimizer - Basic Functionality', () => {
-  let optimizer: QueryOptimizer
-
-  beforeEach(() => {
-    optimizer = new QueryOptimizer()
-  })
-
   describe('Operation Reordering', () => {
     it('should push filters before aggregations', () => {
       const operations: Operation[] = [
@@ -31,7 +28,7 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'filter', params: { column: 'value', operator: 'gt', value: 10 } }
       ]
 
-      const plan = optimizer.optimize(operations, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(operations, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       // Filter should come before aggregate
       expect(plan.operations[0].type).toBe('filter')
@@ -44,7 +41,7 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'filter', params: { column: 'value', operator: 'gt', value: 10 } }
       ]
 
-      const plan = optimizer.optimize(operations, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(operations, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       expect(plan.operations[0].type).toBe('filter')
       expect(plan.operations[1].type).toBe('sort')
@@ -56,7 +53,7 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'filter', params: { column: 'doubled', operator: 'gt', value: 20 } }
       ]
 
-      const plan = optimizer.optimize(operations, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(operations, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       // Can't push filter before compute since it depends on computed column
       expect(plan.operations[0].type).toBe('compute')
@@ -74,8 +71,8 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'filter', params: { column: 'value', operator: 'gt', value: 0 } }
       ]
 
-      const plan1 = optimizer.optimize(selectiveFilter, { rowCount: 1000000, columnCount: 10 })
-      const plan2 = optimizer.optimize(broadFilter, { rowCount: 1000000, columnCount: 10 })
+      const plan1 = QueryOptimizer.optimize(selectiveFilter, { rowCount: 1000000, columnCount: 10, columnStats: new Map() })
+      const plan2 = QueryOptimizer.optimize(broadFilter, { rowCount: 1000000, columnCount: 10, columnStats: new Map() })
 
       expect(plan1.estimatedCost).toBeLessThan(plan2.estimatedCost)
     })
@@ -85,7 +82,7 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'join', params: { leftKey: 'id', rightKey: 'user_id' } }
       ]
 
-      const plan = optimizer.optimize(smallJoin, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(smallJoin, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       expect(plan.estimatedCost).toBeGreaterThan(0)
       expect(plan.estimatedRows).toBeDefined()
@@ -99,7 +96,7 @@ describe('QueryOptimizer - Basic Functionality', () => {
         { type: 'filter', params: { column: 'age', operator: 'lt', value: 65 } }
       ]
 
-      const plan = optimizer.optimize(operations, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(operations, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       // Should optimize to single between operation
       expect(plan.operations.length).toBeLessThanOrEqual(operations.length)
@@ -108,12 +105,6 @@ describe('QueryOptimizer - Basic Functionality', () => {
 })
 
 describe('QueryOptimizer - SECURITY TESTS', () => {
-  let optimizer: QueryOptimizer
-
-  beforeEach(() => {
-    optimizer = new QueryOptimizer()
-  })
-
   describe('SQL Injection Prevention', () => {
     it('should sanitize malicious column names', () => {
       const malicious: Operation[] = [
@@ -128,7 +119,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Should error or sanitize, not execute SQL
-      expect(() => optimizer.optimize(malicious, { rowCount: 1000, columnCount: 5 })).toThrow()
+      expect(() => QueryOptimizer.optimize(malicious, { rowCount: 1000, columnCount: 5, columnStats: new Map() })).toThrow()
     })
 
     it('should reject injection in filter values', () => {
@@ -144,7 +135,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Should treat as string literal, not SQL
-      const plan = optimizer.optimize(malicious, { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize(malicious, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       expect(plan.operations[0].params.value).toBe("1' OR '1'='1")
     })
@@ -161,7 +152,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Should not allow arbitrary code execution
-      expect(() => optimizer.optimize(malicious, { rowCount: 1000, columnCount: 5 })).toThrow()
+      expect(() => QueryOptimizer.optimize(malicious, { rowCount: 1000, columnCount: 5, columnStats: new Map() })).toThrow()
     })
   })
 
@@ -174,7 +165,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       }))
 
       // Should reject or limit
-      expect(() => optimizer.optimize(huge, { rowCount: 1000, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(huge, { rowCount: 1000, columnCount: 5, columnStats: new Map() }))
         .toThrow(/complex|limit|operations/i)
     })
 
@@ -186,7 +177,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Should detect and prevent infinite loop
-      expect(() => optimizer.optimize(circular, { rowCount: 1000, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(circular, { rowCount: 1000, columnCount: 5, columnStats: new Map() }))
         .toThrow(/circular|cycle|dependency/i)
     })
 
@@ -197,7 +188,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       }))
 
       const start = performance.now()
-      const plan = optimizer.optimize(complex, { rowCount: 100000, columnCount: 10 })
+      const plan = QueryOptimizer.optimize(complex, { rowCount: 100000, columnCount: 10, columnStats: new Map() })
       const duration = performance.now() - start
 
       expect(duration).toBeLessThan(10)
@@ -211,7 +202,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Should reject or warn about cartesian product
-      expect(() => optimizer.optimize(dangerous, { rowCount: 10000, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(dangerous, { rowCount: 10000, columnCount: 5, columnStats: new Map() }))
         .toThrow(/key|cartesian/i)
     })
 
@@ -220,7 +211,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
         { type: 'join', params: { leftKey: 'id', rightKey: 'id' } }
       ]
 
-      const plan = optimizer.optimize(huge, {
+      const plan = QueryOptimizer.optimize(huge, {
         rowCount: 1000000,
         columnCount: 10,
         columnStats: new Map()
@@ -233,12 +224,12 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
 
   describe('Input Validation', () => {
     it('should reject null operations', () => {
-      expect(() => optimizer.optimize(null as any, { rowCount: 1000, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(null as any, { rowCount: 1000, columnCount: 5, columnStats: new Map() }))
         .toThrow()
     })
 
     it('should reject empty operations', () => {
-      const plan = optimizer.optimize([], { rowCount: 1000, columnCount: 5 })
+      const plan = QueryOptimizer.optimize([], { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
       expect(plan.operations).toHaveLength(0)
       expect(plan.estimatedCost).toBe(0)
@@ -249,7 +240,7 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
         { type: 'invalid' as any, params: {} }
       ]
 
-      expect(() => optimizer.optimize(invalid, { rowCount: 1000, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(invalid, { rowCount: 1000, columnCount: 5, columnStats: new Map() }))
         .toThrow()
     })
 
@@ -259,23 +250,17 @@ describe('QueryOptimizer - SECURITY TESTS', () => {
       ]
 
       // Negative row count
-      expect(() => optimizer.optimize(ops, { rowCount: -1, columnCount: 5 }))
+      expect(() => QueryOptimizer.optimize(ops, { rowCount: -1, columnCount: 5, columnStats: new Map() }))
         .toThrow()
 
       // Zero columns
-      expect(() => optimizer.optimize(ops, { rowCount: 1000, columnCount: 0 }))
+      expect(() => QueryOptimizer.optimize(ops, { rowCount: 1000, columnCount: 0, columnStats: new Map() }))
         .toThrow()
     })
   })
 })
 
 describe('QueryOptimizer - PERFORMANCE TESTS', () => {
-  let optimizer: QueryOptimizer
-
-  beforeEach(() => {
-    optimizer = new QueryOptimizer()
-  })
-
   describe('Optimization Speed', () => {
     it('should optimize 10 operations in <5ms', () => {
       const operations: Operation[] = Array(10).fill(0).map((_, i) => ({
@@ -284,7 +269,7 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
       }))
 
       const start = performance.now()
-      optimizer.optimize(operations, { rowCount: 100000, columnCount: 10 })
+      QueryOptimizer.optimize(operations, { rowCount: 100000, columnCount: 10, columnStats: new Map() })
       const duration = performance.now() - start
 
       expect(duration).toBeLessThan(5)
@@ -297,7 +282,7 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
       }))
 
       const start = performance.now()
-      optimizer.optimize(operations, { rowCount: 100000, columnCount: 10 })
+      QueryOptimizer.optimize(operations, { rowCount: 100000, columnCount: 10, columnStats: new Map() })
       const duration = performance.now() - start
 
       expect(duration).toBeLessThan(10)
@@ -310,7 +295,7 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
         { type: 'filter', params: { column: 'id', operator: 'eq', value: 1 } }
       ]
 
-      const plan = optimizer.optimize(selective, { 
+      const plan = QueryOptimizer.optimize(selective, { 
         rowCount: 1000000,
         columnCount: 5,
         columnStats: new Map([
@@ -327,7 +312,7 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
         { type: 'filter', params: { column: 'indexed_col', operator: 'eq', value: 1 } }
       ]
 
-      const plan = optimizer.optimize(operations, {
+      const plan = QueryOptimizer.optimize(operations, {
         rowCount: 1000000,
         columnCount: 5,
         columnStats: new Map()
@@ -347,7 +332,7 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
 
       // Run optimization multiple times
       for (let i = 0; i < 10; i++) {
-        optimizer.optimize(operations, { rowCount: 100000, columnCount: 10 })
+        QueryOptimizer.optimize(operations, { rowCount: 100000, columnCount: 10, columnStats: new Map() })
       }
 
       // Should not leak memory (check would be more sophisticated in real test)
@@ -356,18 +341,12 @@ describe('QueryOptimizer - PERFORMANCE TESTS', () => {
 })
 
 describe('QueryOptimizer - Edge Cases', () => {
-  let optimizer: QueryOptimizer
-
-  beforeEach(() => {
-    optimizer = new QueryOptimizer()
-  })
-
   it('should handle single operation', () => {
     const single: Operation[] = [
       { type: 'filter', params: { column: 'id', operator: 'eq', value: 1 } }
     ]
 
-    const plan = optimizer.optimize(single, { rowCount: 1000, columnCount: 5 })
+    const plan = QueryOptimizer.optimize(single, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
     expect(plan.operations).toHaveLength(1)
   })
@@ -377,7 +356,7 @@ describe('QueryOptimizer - Edge Cases', () => {
       { type: 'filter', params: { column: 'id', operator: 'eq', value: 1 } }
     ]
 
-    const plan = optimizer.optimize(operations, {
+    const plan = QueryOptimizer.optimize(operations, {
       rowCount: 0,
       columnCount: 0,
       columnStats: new Map()
@@ -392,9 +371,8 @@ describe('QueryOptimizer - Edge Cases', () => {
       params: { column: 'value', operator: 'gt', value: i }
     }))
 
-    const plan = optimizer.optimize(allFilters, { rowCount: 1000, columnCount: 5 })
+    const plan = QueryOptimizer.optimize(allFilters, { rowCount: 1000, columnCount: 5, columnStats: new Map() })
 
     expect(plan.operations.length).toBeLessThanOrEqual(allFilters.length)
   })
 })
-

@@ -9,8 +9,6 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit",
     "test": "NODE_OPTIONS= vitest",
-    "test:fast": "NODE_OPTIONS= vitest --testTimeout=5000 --exclude='**/*Performance*' --exclude='**/benchmarks/**'",
-    "test:unit": "NODE_OPTIONS= vitest --testTimeout=5000 src/services src/utils src/store",
     "test:ui": "NODE_OPTIONS= vitest --ui",
     "test:coverage": "NODE_OPTIONS= vitest --coverage",
     "test:watch": "NODE_OPTIONS= vitest --watch",

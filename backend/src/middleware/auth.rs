@@ -130,12 +130,32 @@ fn validate_jwt(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::error
     Ok(token_data.claims)
 }
 
-/// Generate a new JWT token
+/// Generate a new JWT access token
 pub fn generate_jwt(claims: &Claims, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
     use jsonwebtoken::{encode, EncodingKey, Header};
 
     let key = EncodingKey::from_secret(secret.as_bytes());
     encode(&Header::default(), claims, &key)
+}
+
+/// Generate a refresh token (uses same JWT format but different purpose)
+pub fn generate_refresh_token(claims: &Claims, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
+    use jsonwebtoken::{encode, EncodingKey, Header};
+
+    // Use a different secret suffix for refresh tokens for additional security
+    let refresh_secret = format!("{}-refresh", secret);
+    let key = EncodingKey::from_secret(refresh_secret.as_bytes());
+    encode(&Header::default(), claims, &key)
+}
+
+/// Validate a refresh token
+pub fn validate_refresh_token(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+    let refresh_secret = format!("{}-refresh", secret);
+    let validation = Validation::new(Algorithm::HS256);
+    let key = DecodingKey::from_secret(refresh_secret.as_bytes());
+
+    let token_data = decode::<Claims>(token, &key, &validation)?;
+    Ok(token_data.claims)
 }
 
 /// Extract claims from request extensions

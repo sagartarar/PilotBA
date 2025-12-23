@@ -1,15 +1,18 @@
 //! File Management Routes
 //!
 //! Provides file upload, download, list, and delete endpoints.
+//! Files are stored on local filesystem with metadata in PostgreSQL.
 
 use actix_web::{web, HttpRequest, HttpResponse};
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::PgPool;
 use std::path::PathBuf;
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 use crate::errors::{ApiError, ApiResult};
 use crate::middleware::auth::get_claims;
@@ -32,27 +35,79 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     );
 }
 
-/// File metadata response
-#[derive(Debug, Serialize, Clone)]
-pub struct FileMetadata {
-    pub id: String,
+// ============================================================================
+// MODELS
+// ============================================================================
+
+/// File record from database
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FileRecord {
+    pub id: Uuid,
+    pub user_id: Uuid,
     pub name: String,
     pub original_name: String,
-    pub size: u64,
-    pub content_type: String,
-    pub created_at: String,
-    pub owner_id: String,
+    pub mime_type: String,
+    pub size_bytes: i64,
+    pub row_count: Option<i32>,
+    pub column_count: Option<i32>,
+    pub storage_path: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
+
+/// File metadata response (for API)
+#[derive(Debug, Serialize, Clone)]
+pub struct FileMetadata {
+    pub id: Uuid,
+    pub name: String,
+    pub original_name: String,
+    pub size: i64,
+    pub content_type: String,
+    pub row_count: Option<i32>,
+    pub column_count: Option<i32>,
+    pub created_at: DateTime<Utc>,
+}
+
+impl From<FileRecord> for FileMetadata {
+    fn from(record: FileRecord) -> Self {
+        FileMetadata {
+            id: record.id,
+            name: record.name,
+            original_name: record.original_name,
+            size: record.size_bytes,
+            content_type: record.mime_type,
+            row_count: record.row_count,
+            column_count: record.column_count,
+            created_at: record.created_at,
+        }
+    }
+}
+
+/// Query parameters for listing files
+#[derive(Debug, Deserialize)]
+pub struct ListFilesQuery {
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub search: Option<String>,
+}
+
+// ============================================================================
+// HANDLERS
+// ============================================================================
 
 /// Upload file
 ///
 /// POST /api/files
 async fn upload_file(
     req: HttpRequest,
+    pool: web::Data<PgPool>,
     mut payload: actix_web::web::Payload,
 ) -> ApiResult<HttpResponse> {
     let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
+
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID"))?;
 
     // Get upload directory
     let upload_dir = get_upload_dir()?;
@@ -100,113 +155,166 @@ async fn upload_file(
     }
 
     // Generate unique file ID and path
-    let file_id = Uuid::new_v4().to_string();
+    let file_id = Uuid::new_v4();
     let file_name = format!("{}.{}", file_id, extension);
     let file_path = upload_dir.join(&file_name);
+    let storage_path = file_path.to_string_lossy().to_string();
 
-    // Write file
+    // Write file to disk
     let mut file = fs::File::create(&file_path).await?;
     file.write_all(&body).await?;
     file.sync_all().await?;
 
-    // Create metadata
-    let metadata = FileMetadata {
-        id: file_id.clone(),
-        name: file_name,
-        original_name: sanitize_filename(&original_name),
-        size: body.len() as u64,
-        content_type: get_content_type(&extension),
-        created_at: chrono::Utc::now().to_rfc3339(),
-        owner_id: claims.sub,
-    };
+    // Get content type
+    let mime_type = get_content_type(&extension);
 
-    // TODO: Store metadata in database
+    // Analyze file to get row/column counts (basic implementation)
+    let (row_count, column_count) = analyze_file(&body, &extension).await;
 
-    log::info!("File uploaded: {} ({} bytes)", metadata.id, metadata.size);
+    // Store metadata in database
+    let record: FileRecord = sqlx::query_as(
+        r#"
+        INSERT INTO files (id, user_id, name, original_name, mime_type, size_bytes, row_count, column_count, storage_path)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+        "#
+    )
+    .bind(&file_id)
+    .bind(&user_id)
+    .bind(&file_name)
+    .bind(sanitize_filename(&original_name))
+    .bind(&mime_type)
+    .bind(body.len() as i64)
+    .bind(row_count)
+    .bind(column_count)
+    .bind(&storage_path)
+    .fetch_one(pool.get_ref())
+    .await
+    .map_err(|e| {
+        // Clean up file if database insert fails
+        let _ = std::fs::remove_file(&file_path);
+        ApiError::internal(format!("Failed to save file metadata: {}", e))
+    })?;
 
-    Ok(HttpResponse::Created().json(metadata))
+    log::info!("File uploaded: {} ({} bytes) by user {}", record.id, record.size_bytes, user_id);
+
+    Ok(HttpResponse::Created().json(FileMetadata::from(record)))
 }
 
 /// List files for current user
 ///
 /// GET /api/files
-async fn list_files(req: HttpRequest) -> ApiResult<HttpResponse> {
+async fn list_files(
+    req: HttpRequest,
+    pool: web::Data<PgPool>,
+    query: web::Query<ListFilesQuery>,
+) -> ApiResult<HttpResponse> {
     let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
 
-    let upload_dir = get_upload_dir()?;
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID"))?;
 
-    // TODO: Replace with database query filtered by owner
-    let mut files = Vec::new();
+    let page = query.page.unwrap_or(1).max(1);
+    let limit = query.limit.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * limit;
 
-    if let Ok(mut entries) = fs::read_dir(&upload_dir).await {
-        while let Ok(Some(entry)) = entries.next_entry().await {
-            if let Ok(metadata) = entry.metadata().await {
-                if metadata.is_file() {
-                    let name = entry.file_name().to_string_lossy().to_string();
-                    let id = name.split('.').next().unwrap_or(&name).to_string();
-                    
-                    files.push(FileMetadata {
-                        id: id.clone(),
-                        name: name.clone(),
-                        original_name: name,
-                        size: metadata.len(),
-                        content_type: "application/octet-stream".to_string(),
-                        created_at: metadata
-                            .created()
-                            .ok()
-                            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-                            .map(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
-                            .flatten()
-                            .map(|dt| dt.to_rfc3339())
-                            .unwrap_or_default(),
-                        owner_id: claims.sub.clone(),
-                    });
-                }
-            }
-        }
+    // Get total count
+    let (total,): (i64,) = if let Some(ref search) = query.search {
+        sqlx::query_as(
+            "SELECT COUNT(*) FROM files WHERE user_id = $1 AND (original_name ILIKE $2 OR name ILIKE $2)"
+        )
+        .bind(&user_id)
+        .bind(format!("%{}%", search))
+        .fetch_one(pool.get_ref())
+        .await
+    } else {
+        sqlx::query_as("SELECT COUNT(*) FROM files WHERE user_id = $1")
+            .bind(&user_id)
+            .fetch_one(pool.get_ref())
+            .await
     }
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
+
+    // Get files
+    let files: Vec<FileRecord> = if let Some(ref search) = query.search {
+        sqlx::query_as(
+            r#"
+            SELECT * FROM files 
+            WHERE user_id = $1 AND (original_name ILIKE $2 OR name ILIKE $2)
+            ORDER BY created_at DESC
+            LIMIT $3 OFFSET $4
+            "#
+        )
+        .bind(&user_id)
+        .bind(format!("%{}%", search))
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool.get_ref())
+        .await
+    } else {
+        sqlx::query_as(
+            r#"
+            SELECT * FROM files 
+            WHERE user_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2 OFFSET $3
+            "#
+        )
+        .bind(&user_id)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool.get_ref())
+        .await
+    }
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
+
+    let file_metadata: Vec<FileMetadata> = files.into_iter().map(FileMetadata::from).collect();
 
     Ok(HttpResponse::Ok().json(json!({
-        "files": files,
-        "total": files.len()
+        "files": file_metadata,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total as f64 / limit as f64).ceil() as i64
     })))
 }
 
-/// Get file by ID
+/// Get file by ID (download)
 ///
 /// GET /api/files/{id}
 async fn get_file(
     req: HttpRequest,
-    path: web::Path<String>,
+    pool: web::Data<PgPool>,
+    path: web::Path<Uuid>,
 ) -> ApiResult<HttpResponse> {
-    let _claims = get_claims(&req)
+    let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
 
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID"))?;
+
     let file_id = path.into_inner();
-    
-    // Validate UUID format to prevent path traversal
-    if Uuid::parse_str(&file_id).is_err() {
-        return Err(ApiError::bad_request("Invalid file ID format"));
-    }
 
-    let upload_dir = get_upload_dir()?;
+    // Get file record and verify ownership
+    let record: Option<FileRecord> = sqlx::query_as(
+        "SELECT * FROM files WHERE id = $1 AND user_id = $2"
+    )
+    .bind(&file_id)
+    .bind(&user_id)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
 
-    // Find file with matching ID
-    let file_path = find_file_by_id(&upload_dir, &file_id).await?;
+    let record = record.ok_or_else(|| ApiError::not_found("File not found"))?;
 
-    // Read file
-    let contents = fs::read(&file_path).await?;
-
-    // Get content type from extension
-    let extension = file_path
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("bin");
-    let content_type = get_content_type(extension);
+    // Read file from disk
+    let contents = fs::read(&record.storage_path).await
+        .map_err(|_| ApiError::not_found("File data not found"))?;
 
     Ok(HttpResponse::Ok()
-        .content_type(content_type)
+        .content_type(record.mime_type)
+        .insert_header(("Content-Disposition", format!("attachment; filename=\"{}\"", record.original_name)))
         .body(contents))
 }
 
@@ -215,25 +323,40 @@ async fn get_file(
 /// DELETE /api/files/{id}
 async fn delete_file(
     req: HttpRequest,
-    path: web::Path<String>,
+    pool: web::Data<PgPool>,
+    path: web::Path<Uuid>,
 ) -> ApiResult<HttpResponse> {
-    let _claims = get_claims(&req)
+    let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
 
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID"))?;
+
     let file_id = path.into_inner();
-    
-    // Validate UUID format
-    if Uuid::parse_str(&file_id).is_err() {
-        return Err(ApiError::bad_request("Invalid file ID format"));
-    }
 
-    let upload_dir = get_upload_dir()?;
-    let file_path = find_file_by_id(&upload_dir, &file_id).await?;
+    // Get file record and verify ownership
+    let record: Option<FileRecord> = sqlx::query_as(
+        "SELECT * FROM files WHERE id = $1 AND user_id = $2"
+    )
+    .bind(&file_id)
+    .bind(&user_id)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
 
-    // Delete file
-    fs::remove_file(&file_path).await?;
+    let record = record.ok_or_else(|| ApiError::not_found("File not found"))?;
 
-    log::info!("File deleted: {}", file_id);
+    // Delete from database first
+    sqlx::query("DELETE FROM files WHERE id = $1")
+        .bind(&file_id)
+        .execute(pool.get_ref())
+        .await
+        .map_err(|e| ApiError::internal(format!("Failed to delete file record: {}", e)))?;
+
+    // Delete file from disk (don't fail if file doesn't exist)
+    let _ = fs::remove_file(&record.storage_path).await;
+
+    log::info!("File deleted: {} by user {}", file_id, user_id);
 
     Ok(HttpResponse::Ok().json(json!({
         "success": true,
@@ -246,70 +369,40 @@ async fn delete_file(
 /// GET /api/files/{id}/metadata
 async fn get_file_metadata(
     req: HttpRequest,
-    path: web::Path<String>,
+    pool: web::Data<PgPool>,
+    path: web::Path<Uuid>,
 ) -> ApiResult<HttpResponse> {
     let claims = get_claims(&req)
         .ok_or_else(|| ApiError::unauthorized("Not authenticated"))?;
 
+    let user_id = Uuid::parse_str(&claims.sub)
+        .map_err(|_| ApiError::unauthorized("Invalid user ID"))?;
+
     let file_id = path.into_inner();
-    
-    // Validate UUID format
-    if Uuid::parse_str(&file_id).is_err() {
-        return Err(ApiError::bad_request("Invalid file ID format"));
-    }
 
-    let upload_dir = get_upload_dir()?;
-    let file_path = find_file_by_id(&upload_dir, &file_id).await?;
+    // Get file record and verify ownership
+    let record: Option<FileRecord> = sqlx::query_as(
+        "SELECT * FROM files WHERE id = $1 AND user_id = $2"
+    )
+    .bind(&file_id)
+    .bind(&user_id)
+    .fetch_optional(pool.get_ref())
+    .await
+    .map_err(|e| ApiError::internal(format!("Database error: {}", e)))?;
 
-    let metadata = fs::metadata(&file_path).await?;
-    let name = file_path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("unknown")
-        .to_string();
+    let record = record.ok_or_else(|| ApiError::not_found("File not found"))?;
 
-    let extension = file_path
-        .extension()
-        .and_then(|e| e.to_str())
-        .unwrap_or("bin");
-
-    Ok(HttpResponse::Ok().json(FileMetadata {
-        id: file_id,
-        name: name.clone(),
-        original_name: name,
-        size: metadata.len(),
-        content_type: get_content_type(extension),
-        created_at: metadata
-            .created()
-            .ok()
-            .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-            .map(|d| chrono::DateTime::from_timestamp(d.as_secs() as i64, 0))
-            .flatten()
-            .map(|dt| dt.to_rfc3339())
-            .unwrap_or_default(),
-        owner_id: claims.sub,
-    }))
+    Ok(HttpResponse::Ok().json(FileMetadata::from(record)))
 }
 
-// Helper functions
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 
 fn get_upload_dir() -> ApiResult<PathBuf> {
     let dir = std::env::var("UPLOAD_DIR")
         .unwrap_or_else(|_| "./uploads".to_string());
     Ok(PathBuf::from(dir))
-}
-
-async fn find_file_by_id(upload_dir: &PathBuf, file_id: &str) -> ApiResult<PathBuf> {
-    let mut entries = fs::read_dir(upload_dir).await?;
-    
-    while let Ok(Some(entry)) = entries.next_entry().await {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if name.starts_with(file_id) {
-            return Ok(entry.path());
-        }
-    }
-    
-    Err(ApiError::not_found(format!("File not found: {}", file_id)))
 }
 
 fn extract_filename(content_disposition: &str) -> Option<String> {
@@ -331,7 +424,7 @@ fn extract_filename(content_disposition: &str) -> Option<String> {
 fn sanitize_filename(name: &str) -> String {
     // Remove path traversal attempts and invalid characters
     name.chars()
-        .filter(|c| c.is_alphanumeric() || *c == '.' || *c == '_' || *c == '-')
+        .filter(|c| c.is_alphanumeric() || *c == '.' || *c == '_' || *c == '-' || *c == ' ')
         .collect::<String>()
         .replace("..", "_")
 }
@@ -346,6 +439,63 @@ fn get_content_type(extension: &str) -> String {
     }
 }
 
+/// Analyze file to extract row and column counts
+async fn analyze_file(data: &[u8], extension: &str) -> (Option<i32>, Option<i32>) {
+    match extension {
+        "csv" => analyze_csv(data),
+        "json" => analyze_json(data),
+        _ => (None, None),
+    }
+}
+
+fn analyze_csv(data: &[u8]) -> (Option<i32>, Option<i32>) {
+    let content = match std::str::from_utf8(data) {
+        Ok(s) => s,
+        Err(_) => return (None, None),
+    };
+
+    let lines: Vec<&str> = content.lines().collect();
+    if lines.is_empty() {
+        return (None, None);
+    }
+
+    // Count columns from header
+    let column_count = lines[0].split(',').count() as i32;
+    
+    // Row count (excluding header)
+    let row_count = (lines.len().saturating_sub(1)) as i32;
+
+    (Some(row_count), Some(column_count))
+}
+
+fn analyze_json(data: &[u8]) -> (Option<i32>, Option<i32>) {
+    let content = match std::str::from_utf8(data) {
+        Ok(s) => s,
+        Err(_) => return (None, None),
+    };
+
+    let json: serde_json::Value = match serde_json::from_str(content) {
+        Ok(v) => v,
+        Err(_) => return (None, None),
+    };
+
+    if let Some(array) = json.as_array() {
+        let row_count = array.len() as i32;
+        let column_count = array
+            .first()
+            .and_then(|obj| obj.as_object())
+            .map(|obj| obj.len() as i32);
+        
+        (Some(row_count), column_count)
+    } else {
+        (None, None)
+    }
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -353,10 +503,9 @@ mod tests {
     #[test]
     fn test_sanitize_filename() {
         assert_eq!(sanitize_filename("test.csv"), "test.csv");
-        // Path traversal attempts result in underscores for .. sequences
-        assert_eq!(sanitize_filename("../../../etc/passwd"), "___etcpasswd");
-        assert_eq!(sanitize_filename("test file.csv"), "testfile.csv");
+        assert_eq!(sanitize_filename("test file.csv"), "test file.csv");
         assert_eq!(sanitize_filename("test..csv"), "test_csv");
+        assert_eq!(sanitize_filename("../etc/passwd"), "_etcpasswd");
     }
 
     #[test]
@@ -379,5 +528,20 @@ mod tests {
         assert_eq!(get_content_type("parquet"), "application/vnd.apache.parquet");
         assert_eq!(get_content_type("unknown"), "application/octet-stream");
     }
-}
 
+    #[test]
+    fn test_analyze_csv() {
+        let csv_data = b"name,age,city\nAlice,30,NYC\nBob,25,LA\n";
+        let (rows, cols) = analyze_csv(csv_data);
+        assert_eq!(rows, Some(2));
+        assert_eq!(cols, Some(3));
+    }
+
+    #[test]
+    fn test_analyze_json() {
+        let json_data = b"[{\"name\":\"Alice\",\"age\":30},{\"name\":\"Bob\",\"age\":25}]";
+        let (rows, cols) = analyze_json(json_data);
+        assert_eq!(rows, Some(2));
+        assert_eq!(cols, Some(2));
+    }
+}
