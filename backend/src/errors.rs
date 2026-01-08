@@ -72,6 +72,11 @@ impl ApiError {
         ApiError::BadRequest(msg.into())
     }
 
+    /// Create a new forbidden error
+    pub fn forbidden(msg: impl Into<String>) -> Self {
+        ApiError::Forbidden(msg.into())
+    }
+
     /// Create a new internal error
     pub fn internal(msg: impl Into<String>) -> Self {
         ApiError::Internal(msg.into())

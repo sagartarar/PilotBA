@@ -11,3 +11,7 @@ export {
   type AuthContextType,
 } from './AuthContext';
 
+export {
+  TeamsProvider,
+  useTeams,
+} from './TeamsContext';

@@ -670,24 +670,26 @@ async fn leave_team(
 
 /// Generate URL-friendly slug from name
 fn generate_slug(name: &str) -> String {
-    name.to_lowercase()
-        .chars()
-        .map(|c| {
-            if c.is_alphanumeric() {
-                c
-            } else if c.is_whitespace() || c == '-' || c == '_' {
-                '-'
-            } else {
-                ' '
-            }
-        })
-        .collect::<String>()
-        .split_whitespace()
-        .collect::<Vec<&str>>()
-        .join("-")
-        .chars()
-        .take(100)
-        .collect()
+    let mut result = String::new();
+    let mut last_was_dash = true; // Start true to trim leading dashes
+
+    for c in name.to_lowercase().chars() {
+        if c.is_alphanumeric() {
+            result.push(c);
+            last_was_dash = false;
+        } else if (c.is_whitespace() || c == '-' || c == '_') && !last_was_dash {
+            result.push('-');
+            last_was_dash = true;
+        }
+        // Skip other chars entirely
+    }
+
+    // Trim trailing dash and limit length
+    if result.ends_with('-') {
+        result.pop();
+    }
+
+    result.chars().take(100).collect()
 }
 
 // ============================================================================

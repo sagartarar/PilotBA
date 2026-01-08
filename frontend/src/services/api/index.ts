@@ -35,3 +35,20 @@ export {
   type UploadProgress,
 } from './filesApi';
 
+export {
+  teamsApi,
+  canManageMembers,
+  canManageSettings,
+  canDeleteTeam,
+  canCreateContent,
+  canEditContent,
+  getRoleDisplayName,
+  getAssignableRoles,
+  type Team,
+  type TeamMember,
+  type TeamRole,
+  type CreateTeamRequest,
+  type UpdateTeamRequest,
+  type InviteUserRequest,
+  type UpdateMemberRoleRequest,
+} from './teamsApi';
