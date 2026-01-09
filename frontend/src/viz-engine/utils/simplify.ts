@@ -31,6 +31,13 @@ export function simplifyLine(points: Point[], tolerance: number): Point[] {
     return points;
   }
 
+  // Handle invalid tolerance values gracefully
+  // Negative tolerance would cause infinite recursion
+  // Zero tolerance means keep all points
+  if (tolerance <= 0) {
+    return [...points];
+  }
+
   return douglasPeucker(points, tolerance);
 }
 

@@ -207,15 +207,23 @@ export class Quadtree {
     this.divided = true;
 
     // Redistribute existing points to children
+    // Keep track of points that couldn't be redistributed (boundary edge cases)
+    const failedPoints: Point[] = [];
     for (const point of this.points) {
-      this.northwest.insert(point) ||
+      const inserted =
+        this.northwest.insert(point) ||
         this.northeast.insert(point) ||
         this.southwest.insert(point) ||
         this.southeast.insert(point);
+      
+      if (!inserted) {
+        failedPoints.push(point);
+      }
     }
 
-    // Keep points in this node for query optimization
-    // (some implementations clear here, but keeping them avoids edge cases)
+    // Only keep points that couldn't be redistributed (rare edge cases)
+    // This prevents duplicate counting while handling boundary precision issues
+    this.points = failedPoints;
   }
 
   /**
