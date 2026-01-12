@@ -21,7 +21,7 @@ sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid"
 duckdb = { version = "0.10", features = ["bundled"] }
 
 # Redis
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
 
 # GraphQL
 async-graphql = "7.0"
